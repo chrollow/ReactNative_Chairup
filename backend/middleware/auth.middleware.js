@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'your-secret-key';
+const User = require('../models/User');
+require('dotenv').config();
 
-const verifyToken = (req, res, next) => {
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const verifyToken = async (req, res, next) => {
   const token = req.headers['x-access-token'] || req.headers['authorization'];
 
   if (!token) {
@@ -11,13 +14,20 @@ const verifyToken = (req, res, next) => {
   // Remove Bearer from string if it exists
   const tokenValue = token.startsWith('Bearer ') ? token.slice(7, token.length) : token;
 
-  jwt.verify(tokenValue, JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: "Unauthorized!" });
-    }
+  try {
+    const decoded = jwt.verify(tokenValue, JWT_SECRET);
     req.userId = decoded.id;
+    
+    // Optionally verify the user exists in database
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).send({ message: "User no longer exists!" });
+    }
+    
     next();
-  });
+  } catch (error) {
+    return res.status(401).send({ message: "Unauthorized!" });
+  }
 };
 
 module.exports = verifyToken;

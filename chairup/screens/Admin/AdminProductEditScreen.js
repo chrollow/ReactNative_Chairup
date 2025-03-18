@@ -1,108 +1,133 @@
-import React, { useState, useEffect, useContext } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  TextInput,
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
   Alert,
   ActivityIndicator,
-  Platform
+  Image,
+  Modal
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as SecureStore from 'expo-secure-store';
-import { Picker } from '@react-native-picker/picker';
-import axios from 'axios';
-import { AuthContext } from '../../Context/Store/AuthGlobal';
+import API from '../../utils/api';
 
-const API_URL = "http://192.168.1.39:3000/api";
+// Product categories
+const categories = ['Office', 'Gaming', 'Living Room', 'Dining', 'Outdoor'];
 
 const AdminProductEditScreen = ({ route, navigation }) => {
   const { product } = route.params || {};
-  const { stateUser } = useContext(AuthContext);
-  const isEditing = !!product;
-  
+
   const [name, setName] = useState(product?.name || '');
   const [price, setPrice] = useState(product?.price ? product.price.toString() : '');
-  const [category, setCategory] = useState(product?.category || 'Office');
   const [description, setDescription] = useState(product?.description || '');
-  const [image, setImage] = useState(product?.image || null);
+  const [category, setCategory] = useState(product?.category || categories[0]);
+  const [image, setImage] = useState(product?.image || '');
   const [stockQuantity, setStockQuantity] = useState(product?.stockQuantity ? product.stockQuantity.toString() : '0');
   const [loading, setLoading] = useState(false);
-  
-  // Predefined categories
-  const categories = ['Office', 'Gaming', 'Living Room', 'Dining', 'Outdoor'];
-  
+  const [showImageSourceModal, setShowImageSourceModal] = useState(false);
+
   useEffect(() => {
-    // Check if user is admin
-    if (!stateUser.isAuthenticated || !stateUser.user.isAdmin) {
-      navigation.navigate('HomeTab');
-      return;
-    }
-    
-    // Request permissions on component mount
+    // Request permissions for camera and image picker
     (async () => {
-      if (Platform.OS !== 'web') {
-        const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-        const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (cameraStatus !== 'granted' || libraryStatus !== 'granted') {
-          Alert.alert('Permission required', 'Camera and Photos access is needed to add product images');
-        }
+      // Request media library permissions
+      const galleryStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (galleryStatus.status !== 'granted') {
+        Alert.alert('Permission denied', 'Sorry, we need camera roll permissions to upload images.');
+      }
+      
+      // Request camera permissions
+      const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+      if (cameraStatus.status !== 'granted') {
+        Alert.alert('Permission denied', 'Sorry, we need camera permissions to take photos.');
       }
     })();
   }, []);
 
-  const takePhoto = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+  const openImagePicker = () => {
+    setShowImageSourceModal(true);
+  };
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+  const takePhoto = async () => {
+    setShowImageSourceModal(false);
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log("Camera photo taken:", result.assets[0].uri);
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to capture photo");
     }
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    setShowImageSourceModal(false);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log("Gallery image selected:", result.assets[0].uri);
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image");
     }
   };
 
-  const validateForm = () => {
-    if (!name.trim()) return "Name is required";
-    if (!price.trim() || isNaN(parseFloat(price)) || parseFloat(price) <= 0) 
-      return "Valid price is required";
-    if (!category) return "Category is required";
-    if (!description.trim()) return "Description is required";
-    if (!image) return "Product image is required";
-    if (!stockQuantity.trim() || isNaN(parseInt(stockQuantity)) || parseInt(stockQuantity) < 0)
-      return "Valid stock quantity is required";
-    return null;
+  // Function to create a new product
+  const createProduct = async (productData) => {
+    try {
+      const response = await API.post('/products', productData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error creating product:', error);
+      return { success: false, message: error.message };
+    }
   };
 
-  const saveProduct = async () => {
-    const error = validateForm();
-    if (error) {
-      Alert.alert("Validation Error", error);
+  // Function to update an existing product
+  const updateProduct = async (id, productData) => {
+    try {
+      const response = await API.put(`/products/${id}`, productData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error updating product:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const handleSave = async () => {
+    // Validation
+    if (!name.trim()) {
+      Alert.alert('Error', 'Product name is required');
+      return;
+    }
+    
+    if (!price.trim() || isNaN(parseFloat(price))) {
+      Alert.alert('Error', 'Please enter a valid price');
       return;
     }
     
     try {
       setLoading(true);
-      const token = await SecureStore.getItemAsync('userToken');
       
       const productData = {
         name,
@@ -110,71 +135,41 @@ const AdminProductEditScreen = ({ route, navigation }) => {
         category,
         description,
         image,
-        stockQuantity: parseInt(stockQuantity, 10) || 0,  // Ensure stockQuantity is parsed as int
+        stockQuantity: parseInt(stockQuantity) || 0
       };
       
-      console.log("Saving product with data:", productData); // Log data to verify
+      console.log(`Saving product: ${name}, ID: ${product?._id || 'new'}`);
       
-      let response;
-      
-      if (isEditing) {
-        response = await axios.put(`${API_URL}/products/${product.id}`, productData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      let result;
+      if (product && product._id) {
+        // Update existing product
+        result = await updateProduct(product._id, productData);
       } else {
-        response = await axios.post(`${API_URL}/products`, productData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Create new product
+        result = await createProduct(productData);
       }
       
-      console.log("Response from API:", response.data); // Log response to verify
-      
-      Alert.alert(
-        "Success",
-        isEditing ? "Product updated successfully" : "Product created successfully",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
-      );
+      if (result.success) {
+        Alert.alert(
+          "Success", 
+          product ? "Product updated" : "Product created",
+          [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+      } else {
+        Alert.alert("Error", result.message || "Operation failed");
+      }
     } catch (error) {
-      console.error("API Error:", error.response?.data || error.message);
-      Alert.alert("Error", isEditing ? "Failed to update product" : "Failed to create product");
+      console.error("Product save error:", error);
+      Alert.alert("Error", "Failed to save product");
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.imageContainer}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.productImage} />
-        ) : (
-          <View style={styles.imagePlaceholder}>
-            <Ionicons name="image-outline" size={50} color="#ccc" />
-            <Text style={styles.placeholderText}>No image selected</Text>
-          </View>
-        )}
-        
-        <View style={styles.imageButtons}>
-          <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
-            <Ionicons name="camera" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Camera</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-            <Ionicons name="images" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Gallery</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Product Name</Text>
+        <Text style={styles.label}>Product Name *</Text>
         <TextInput
           style={styles.input}
           value={name}
@@ -184,13 +179,13 @@ const AdminProductEditScreen = ({ route, navigation }) => {
       </View>
       
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Price ($)</Text>
+        <Text style={styles.label}>Price *</Text>
         <TextInput
           style={styles.input}
           value={price}
           onChangeText={setPrice}
           placeholder="Enter price"
-          keyboardType="decimal-pad"
+          keyboardType="numeric"
         />
       </View>
       
@@ -199,14 +194,24 @@ const AdminProductEditScreen = ({ route, navigation }) => {
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={category}
-            onValueChange={setCategory}
-            style={styles.picker}
+            onValueChange={(itemValue) => setCategory(itemValue)}
           >
             {categories.map(cat => (
               <Picker.Item key={cat} label={cat} value={cat} />
             ))}
           </Picker>
         </View>
+      </View>
+      
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Stock Quantity</Text>
+        <TextInput
+          style={styles.input}
+          value={stockQuantity}
+          onChangeText={setStockQuantity}
+          placeholder="Enter stock quantity"
+          keyboardType="numeric"
+        />
       </View>
       
       <View style={styles.formGroup}>
@@ -217,37 +222,85 @@ const AdminProductEditScreen = ({ route, navigation }) => {
           onChangeText={setDescription}
           placeholder="Enter product description"
           multiline
-          numberOfLines={5}
+          numberOfLines={4}
         />
       </View>
       
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Stock Quantity</Text>
-        <TextInput
-          style={styles.input}
-          value={stockQuantity}
-          onChangeText={setStockQuantity}
-          placeholder="Available stock quantity"
-          keyboardType="number-pad"
-        />
+        <Text style={styles.label}>Product Image</Text>
+        <TouchableOpacity onPress={openImagePicker} style={styles.imagePickerButton}>
+          <Text style={styles.imagePickerText}>Add Image</Text>
+        </TouchableOpacity>
+        
+        {image ? (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: image }} style={styles.imagePreview} />
+            <TouchableOpacity style={styles.removeImageButton} onPress={() => setImage('')}>
+              <Ionicons name="close-circle" size={24} color="red" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.noImageContainer}>
+            <Ionicons name="image-outline" size={60} color="#ccc" />
+            <Text style={styles.noImageText}>No image selected</Text>
+          </View>
+        )}
       </View>
       
       <TouchableOpacity 
-        style={[styles.saveButton, loading && styles.disabledButton]}
-        onPress={saveProduct}
+        style={styles.saveButton}
+        onPress={handleSave}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator color="#fff" size="small" />
         ) : (
-          <>
-            <Ionicons name="save-outline" size={20} color="#fff" />
-            <Text style={styles.saveButtonText}>
-              {isEditing ? 'Update Product' : 'Create Product'}
-            </Text>
-          </>
+          <Text style={styles.saveButtonText}>
+            {product ? 'Update Product' : 'Save Product'}
+          </Text>
         )}
       </TouchableOpacity>
+
+      {/* Image Source Selection Modal */}
+      <Modal
+        visible={showImageSourceModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowImageSourceModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowImageSourceModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Image Source</Text>
+            
+            <TouchableOpacity 
+              style={styles.modalOption}
+              onPress={takePhoto}
+            >
+              <Ionicons name="camera-outline" size={24} color="#4a6da7" />
+              <Text style={styles.modalOptionText}>Take Photo</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.modalOption}
+              onPress={pickImage}
+            >
+              <Ionicons name="images-outline" size={24} color="#4a6da7" />
+              <Text style={styles.modalOptionText}>Choose from Gallery</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.modalOption, styles.cancelOption]}
+              onPress={() => setShowImageSourceModal(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -258,94 +311,127 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#f8f8f8',
   },
-  imageContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  productImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  imagePlaceholder: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  placeholderText: {
-    color: '#999',
-    marginTop: 8,
-  },
-  imageButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  imageButton: {
-    flexDirection: 'row',
-    backgroundColor: '#4a6da7',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 4,
-    marginHorizontal: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    marginLeft: 4,
-  },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 8,
-    fontWeight: '500',
     color: '#333',
   },
   input: {
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 4,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
   },
   textArea: {
-    height: 100,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   pickerContainer: {
+    backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 4,
-    backgroundColor: '#fff',
+    borderRadius: 8,
   },
-  picker: {
-    height: 50,
-  },
-  saveButton: {
-    flexDirection: 'row',
+  imagePickerButton: {
     backgroundColor: '#4a6da7',
-    padding: 15,
+    padding: 12,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 16,
+  },
+  imagePickerText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    resizeMode: 'cover',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 15,
+  },
+  noImageContainer: {
+    height: 200,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
     justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    alignItems: 'center',
+  },
+  noImageText: {
+    color: '#999',
+    marginTop: 8,
+  },
+  saveButton: {
+    backgroundColor: '#4a6da7',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10,
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
-    marginLeft: 8,
+    fontWeight: 'bold',
   },
-  disabledButton: {
-    backgroundColor: '#a0a0a0',
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    padding: 20,
+    paddingBottom: 30,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    marginLeft: 15,
+  },
+  cancelOption: {
+    marginTop: 10,
+    borderBottomWidth: 0,
+    justifyContent: 'center',
+  },
+  cancelText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+    fontWeight: '500',
   }
 });
 

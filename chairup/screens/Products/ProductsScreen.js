@@ -15,11 +15,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProductContext } from '../../Context/Store/ProductGlobal';
-import Slider from '@react-native-community/slider';
+import Slider from '@react-native-community/slider';  // Make sure this is the only slider import
 import SimpleDrawer from '../../components/SimpleDrawer';
 import styles from './styles/ProductsScreen.styles';
 import axios from 'axios';
 import { useFocusEffect } from '@react-navigation/native';
+import API from '../../utils/api';
 
 const API_URL = "http://192.168.1.39:3000/api";
 
@@ -41,7 +42,9 @@ const ProductsScreen = ({ navigation }) => {
     try {
       setLoading(true);
       console.log("⏳ Fetching products from:", `${API_URL}/products`);
-      const response = await axios.get(`${API_URL}/products`);
+      
+      // Use the API utility which handles authentication
+      const response = await API.get('/products');
       
       console.log("📦 Raw API response:", JSON.stringify(response.data));
       
@@ -54,7 +57,8 @@ const ProductsScreen = ({ navigation }) => {
       console.log('✅ Products fetched successfully:', response.data.length);
     } catch (error) {
       console.error("❌ Error fetching products:", error.message);
-      Alert.alert("Error", "Failed to load products");
+      console.error("Error details:", error.response?.data || error);
+      Alert.alert("Error", "Failed to load products: " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -156,6 +160,9 @@ const ProductsScreen = ({ navigation }) => {
   }, []);
 
   const renderProductItem = ({ item }) => {
+    // Debug product ID information
+    console.log(`Product ${item.name} has ID:`, item._id || item.id || 'NO ID');
+    
     // Check if the image URL is valid and properly formatted
     const isValidImageUrl = item.image && (
       item.image.startsWith('http') || 
@@ -168,7 +175,7 @@ const ProductsScreen = ({ navigation }) => {
     return (
       <TouchableOpacity 
         style={styles.productItem}
-        onPress={() => navigation.navigate('ProductDetail', { productId: item.id, name: item.name })}
+        onPress={() => navigation.navigate('ProductDetail', { productId: item._id, name: item.name })}
       >
         {isValidImageUrl ? (
           <Image 

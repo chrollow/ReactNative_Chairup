@@ -1,126 +1,96 @@
-const db = require('../config/db');
+const Product = require('../models/Product');
 
 // Get all products
-exports.getAllProducts = (req, res) => {
-  const query = 'SELECT * FROM products ORDER BY created_at DESC';
-  
-  db.all(query, [], (err, products) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).send({ message: err.message });
-    }
-    console.log("Products retrieved:", products); // Log products to verify
+exports.getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find().sort({ created_at: -1 });
     res.status(200).send(products);
-  });
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).send({ message: error.message });
+  }
 };
 
 // Get product by ID
-exports.getProductById = (req, res) => {
-  const { id } = req.params;
-  
-  db.get('SELECT * FROM products WHERE id = ?', [id], (err, product) => {
-    if (err) {
-      return res.status(500).send({ message: err.message });
-    }
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
     
     if (!product) {
       return res.status(404).send({ message: "Product not found" });
     }
     
     res.status(200).send(product);
-  });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 };
 
 // Create product
-exports.createProduct = (req, res) => {
+exports.createProduct = async (req, res) => {
   const { name, price, category, description, image, stockQuantity } = req.body;
   
   if (!name || !price) {
     return res.status(400).send({ message: "Product name and price are required" });
   }
   
-  const query = `INSERT INTO products 
-    (name, price, category, description, image, stockQuantity) 
-    VALUES (?, ?, ?, ?, ?, ?)`;
-  
-  db.run(query, [
-    name, 
-    price, 
-    category || 'Office', 
-    description || '', 
-    image || '', 
-    stockQuantity || 0  // Ensure stockQuantity is properly captured
-  ], function(err) {
-    if (err) {
-      return res.status(500).send({ message: err.message });
-    }
-    
-    // Get the newly created product
-    db.get('SELECT * FROM products WHERE id = ?', [this.lastID], (err, product) => {
-      if (err) {
-        return res.status(500).send({ message: err.message });
-      }
-      
-      res.status(201).send(product);
+  try {
+    const product = new Product({
+      name,
+      price: Number(price),
+      category: category || 'Office', 
+      description: description || '', 
+      image: image || '', 
+      stockQuantity: Number(stockQuantity) || 0
     });
-  });
+    
+    const savedProduct = await product.save();
+    res.status(201).send(savedProduct);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 };
 
 // Update product
-exports.updateProduct = (req, res) => {
+exports.updateProduct = async (req, res) => {
   const { id } = req.params;
   const { name, price, category, description, image, stockQuantity } = req.body;
   
-  const query = `UPDATE products SET 
-    name = COALESCE(?, name),
-    price = COALESCE(?, price),
-    category = COALESCE(?, category),
-    description = COALESCE(?, description),
-    image = COALESCE(?, image),
-    stockQuantity = COALESCE(?, stockQuantity)
-    WHERE id = ?`;
-  
-  db.run(query, [
-    name, 
-    price, 
-    category, 
-    description, 
-    image, 
-    stockQuantity !== undefined ? stockQuantity : null,  // Handle stockQuantity explicitly
-    id
-  ], function(err) {
-    if (err) {
-      return res.status(500).send({ message: err.message });
-    }
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id, 
+      {
+        name,
+        price: Number(price),
+        category,
+        description, 
+        image,
+        stockQuantity: Number(stockQuantity)
+      }, 
+      { new: true }
+    );
     
-    if (this.changes === 0) {
+    if (!updatedProduct) {
       return res.status(404).send({ message: "Product not found" });
     }
     
-    // Get the updated product
-    db.get('SELECT * FROM products WHERE id = ?', [id], (err, product) => {
-      if (err) {
-        return res.status(500).send({ message: err.message });
-      }
-      
-      res.status(200).send(product);
-    });
-  });
+    res.status(200).send(updatedProduct);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 };
 
 // Delete product
-exports.deleteProduct = (req, res) => {
-  const { id } = req.params;
-  
-  db.run('DELETE FROM products WHERE id = ?', [id], function(err) {
-    if (err) {
-      return res.status(500).send({ message: err.message });
-    }
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
     
-    if (this.changes === 0) {
+    if (!product) {
       return res.status(404).send({ message: "Product not found" });
     }
     
-    res.status(200).send({ message: "Product deleted successfully" });
-  });
+    res.status(200).send({ message: "Product deleted" });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 };

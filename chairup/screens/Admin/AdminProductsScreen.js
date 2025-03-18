@@ -1,73 +1,87 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
-  StyleSheet, 
-  Text, 
   View, 
+  Text, 
   FlatList, 
   TouchableOpacity, 
-  Alert,
-  ActivityIndicator,
-  SafeAreaView
+  StyleSheet, 
+  Alert, 
+  Image,
+  ActivityIndicator 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { AuthContext } from '../../Context/Store/AuthGlobal';
-import { useFocusEffect } from '@react-navigation/native';
-
-const API_URL = "http://192.168.1.39:3000/api";
+import { ProductContext } from '../../Context/Store/ProductGlobal';
+import API from '../../utils/api';
+import TouchableScale from '../../components/TouchableScale';
 
 const AdminProductsScreen = ({ navigation }) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { stateUser } = useContext(AuthContext);
-  
-  // This will reload data every time the screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchProducts();
-      return () => {}; // cleanup function
-    }, [])
-  );
-  
+  const { stateProducts, dispatch } = useContext(ProductContext);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch products from API
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/products`);
-      setProducts(response.data);
+      console.log("⏳ Admin: Fetching products...");
+      
+      const response = await API.get('/products');
+      console.log("📦 Admin: Raw API response products count:", response.data?.length || 0);
+      
+      // Update the global state with fetched products
+      dispatch({
+        type: 'SET_PRODUCTS',
+        payload: response.data
+      });
+      
+      console.log('✅ Products fetched successfully for admin');
     } catch (error) {
-      console.error("Error fetching products:", error);
-      Alert.alert("Error", "Failed to load products");
+      console.error("❌ Error fetching products for admin:", error.message);
+      Alert.alert("Error", "Failed to load products: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
   };
-  
-  const deleteProduct = async (productId) => {
+
+  // Load products when the screen is focused
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchProducts();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleAddProduct = () => {
+    navigation.navigate('AdminProductEdit');
+  };
+
+  const handleEditProduct = (product) => {
+    navigation.navigate('AdminProductEdit', { product });
+  };
+
+  const handleDeleteProduct = async (product) => {
     Alert.alert(
       "Delete Product",
-      "Are you sure you want to delete this product?",
+      `Are you sure you want to delete ${product.name}?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive", 
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
             try {
               setLoading(true);
-              const token = await SecureStore.getItemAsync('userToken');
+              await API.delete(`/products/${product._id}`);
               
-              await axios.delete(`${API_URL}/products/${productId}`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-              
-              // Update products list after deletion
-              setProducts(products.filter(p => p.id !== productId));
+              // Update product list after deletion
+              fetchProducts();
               Alert.alert("Success", "Product deleted successfully");
             } catch (error) {
-              console.error(error);
+              console.error("Error deleting product:", error);
               Alert.alert("Error", "Failed to delete product");
             } finally {
               setLoading(false);
@@ -78,76 +92,91 @@ const AdminProductsScreen = ({ navigation }) => {
     );
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProducts().then(() => setRefreshing(false));
+  };
+
   const renderProductItem = ({ item }) => {
-    // Ensure stockQuantity is converted to a number
-    const stockQty = Number(item.stockQuantity || 0);
+    // Debug info to help identify any issues with product IDs
+    const productId = item?._id || 'missing-id';
+    console.log(`Admin rendering product: ${item?.name || 'Unnamed'}, ID: ${productId}`);
     
+    // Check if image URL is valid
+    const hasValidImage = item?.image && (
+      item.image.startsWith('http') || 
+      item.image.startsWith('file:///') || 
+      item.image.startsWith('data:image')
+    );
+
     return (
-      <View style={styles.productItem}>
-        <TouchableOpacity 
-          style={styles.productInfo}
-          onPress={() => navigation.navigate('AdminProductEdit', { product: item })}
-        >
-          <Text style={styles.productName}>{item.name}</Text>
-          <Text style={styles.productPrice}>${item.price}</Text>
-          <View style={styles.detailsRow}>
-            <Text style={styles.productCategory}>{item.category}</Text>
-            <Text style={[
-              styles.stockIndicator, 
-              stockQty > 0 ? styles.inStock : styles.outOfStock
-            ]}>
-              {stockQty > 0 ? 
-                `In Stock (${stockQty})` : 
-                'Out of Stock'}
-            </Text>
+      <TouchableScale 
+        style={styles.productItem}
+        onPress={() => handleEditProduct(item)}
+      >
+        {hasValidImage ? (
+          <Image 
+            source={{ uri: item.image }} 
+            style={styles.productImage}
+            onError={() => console.log(`Failed to load image for ${item?.name || 'Unknown product'}`)}
+          />
+        ) : (
+          <View style={[styles.productImage, { backgroundColor: '#e1e1e1', justifyContent: 'center', alignItems: 'center' }]}>
+            <Ionicons name="image-outline" size={30} color="#999" />
           </View>
-        </TouchableOpacity>
+        )}
         
-        <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => navigation.navigate('AdminProductEdit', { product: item })}
-          >
-            <Ionicons name="create-outline" size={24} color="#4a6da7" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.deleteButton}
-            onPress={() => deleteProduct(item.id)}
-          >
-            <Ionicons name="trash-outline" size={24} color="#ff6b6b" />
-          </TouchableOpacity>
+        <View style={styles.productContent}>
+          <Text style={styles.productName}>{item?.name || 'Unnamed Product'}</Text>
+          <Text style={styles.productPrice}>${parseFloat(item?.price || 0).toFixed(2)}</Text>
+          <Text style={styles.productCategory}>{item?.category || 'Uncategorized'}</Text>
+          <Text style={styles.productStock}>Stock: {item?.stockQuantity || 0}</Text>
         </View>
-      </View>
+        
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={() => handleDeleteProduct(item)}
+        >
+          <Ionicons name="trash-outline" size={24} color="#ff6b6b" />
+        </TouchableOpacity>
+      </TouchableScale>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity 
-        style={styles.addButton}
-        onPress={() => navigation.navigate('AdminProductEdit')}
-      >
-        <Ionicons name="add" size={24} color="#fff" />
-        <Text style={styles.addButtonText}>Add New Product</Text>
-      </TouchableOpacity>
-      
-      {loading ? (
+    <View style={styles.container}>
+      {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4a6da7" />
+          <Text style={styles.loadingText}>Loading products...</Text>
         </View>
       ) : (
-        <FlatList
-          data={products}
-          renderItem={renderProductItem}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No products found</Text>
-          }
-        />
+        <>
+          <FlatList
+            data={stateProducts.products || []}
+            renderItem={renderProductItem}
+            keyExtractor={item => item?._id?.toString() || Math.random().toString()}
+            contentContainerStyle={styles.listContent}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Ionicons name="cart-outline" size={60} color="#ccc" />
+                <Text style={styles.emptyText}>No products found</Text>
+                <Text style={styles.emptySubtext}>Add your first product</Text>
+              </View>
+            }
+          />
+          
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={handleAddProduct}
+          >
+            <Ionicons name="add" size={30} color="#fff" />
+          </TouchableOpacity>
+        </>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -156,29 +185,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  listContainer: {
+  listContent: {
     padding: 16,
   },
   productItem: {
-    flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  productInfo: {
+  productImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  productContent: {
     flex: 1,
   },
   productName: {
@@ -189,63 +217,63 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 14,
     color: '#4a6da7',
-    marginBottom: 4,
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
+    fontWeight: '600',
+    marginBottom: 2,
   },
   productCategory: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 2,
   },
-  stockIndicator: {
-    fontSize: 12,
-    fontWeight: '500',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  inStock: {
-    backgroundColor: '#e6f7e6',
-    color: '#28a745',
-  },
-  outOfStock: {
-    backgroundColor: '#ffebeb',
-    color: '#dc3545',
-  },
-  actions: {
-    flexDirection: 'row',
-  },
-  editButton: {
-    padding: 8,
-    marginRight: 8,
+  productStock: {
+    fontSize: 13,
+    color: '#555',
   },
   deleteButton: {
+    justifyContent: 'center',
     padding: 8,
   },
   addButton: {
-    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
     backgroundColor: '#4a6da7',
-    margin: 16,
-    padding: 14,
-    borderRadius: 8,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#888',
+  },
+  emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginLeft: 8,
-    fontSize: 16,
+    paddingVertical: 40,
   },
   emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 20,
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#888',
+    marginTop: 10,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#aaa',
+    marginTop: 5,
   }
 });
 

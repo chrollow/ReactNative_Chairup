@@ -1,5 +1,5 @@
-import React, { createContext, useReducer } from "react";
-import productReducer from "../Reducers/Product.reducer";
+import React, { createContext, useReducer } from 'react';
+import { ProductReducer } from '../Reducers/Product.reducer';
 
 // Sample product data
 const initialProducts = [
@@ -73,11 +73,13 @@ const initialProducts = [
 
 export const ProductContext = createContext();
 
-const ProductProvider = ({ children }) => {
-  const [stateProducts, dispatch] = useReducer(productReducer, { 
+const ProductGlobal = ({ children }) => {
+  const initialState = {
     products: initialProducts,
     cart: []
-  });
+  };
+
+  const [stateProducts, dispatch] = useReducer(ProductReducer, initialState);
 
   return (
     <ProductContext.Provider value={{ stateProducts, dispatch }}>
@@ -86,4 +88,4 @@ const ProductProvider = ({ children }) => {
   );
 };
 
-export default ProductProvider;
+export default ProductGlobal;
