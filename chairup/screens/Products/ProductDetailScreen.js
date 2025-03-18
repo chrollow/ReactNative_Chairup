@@ -29,6 +29,8 @@ const ProductDetailScreen = ({ route, navigation }) => {
         setLoading(true);
         const response = await axios.get(`${API_URL}/products/${productId}`);
         setProduct(response.data);
+        // Reset quantity to 1 whenever a new product is loaded
+        setQuantity(1);
       } catch (error) {
         console.error("Error fetching product details:", error);
         Alert.alert("Error", "Failed to load product details");
@@ -61,8 +63,20 @@ const ProductDetailScreen = ({ route, navigation }) => {
     );
   }
 
+  // Get available stock quantity, defaulting to 0 if not available
+  const availableStock = product.stockQuantity || 0;
+  
+  // Check if the product is in stock
+  const isInStock = availableStock > 0;
+
   const increaseQuantity = () => {
-    setQuantity(quantity + 1);
+    // Only increase if quantity is less than available stock
+    if (quantity < availableStock) {
+      setQuantity(quantity + 1);
+    } else {
+      // Optional: Show message when trying to add more than available stock
+      Alert.alert("Maximum Quantity", `Only ${availableStock} items available in stock.`);
+    }
   };
 
   const decreaseQuantity = () => {
@@ -72,6 +86,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
   };
 
   const addToCart = () => {
+    // Double-check that we're not adding more than the available stock
+    if (quantity > availableStock) {
+      Alert.alert("Insufficient Stock", `Only ${availableStock} items available.`);
+      return;
+    }
+    
     dispatch({
       type: 'ADD_TO_CART',
       payload: {
@@ -89,6 +109,19 @@ const ProductDetailScreen = ({ route, navigation }) => {
       ]
     );
   };
+
+  // Get stock status text and color
+  const getStockStatus = () => {
+    if (availableStock === 0) {
+      return { text: "Out of Stock", color: "#ff4d4d" };
+    } else if (availableStock <= 5) {
+      return { text: `Low Stock: ${availableStock} left`, color: "#ff9933" };
+    } else {
+      return { text: `In Stock: ${availableStock} available`, color: "#47c266" };
+    }
+  };
+  
+  const stockStatus = getStockStatus();
 
   return (
     <ScrollView style={styles.container}>
@@ -130,32 +163,57 @@ const ProductDetailScreen = ({ route, navigation }) => {
           Category: {product.category || 'Office Chair'}
         </Text>
         
+        {/* Stock status indicator */}
+        <Text style={[styles.stockStatusText, { color: stockStatus.color }]}>
+          {stockStatus.text}
+        </Text>
+        
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityLabel}>Quantity:</Text>
           <View style={styles.quantityControls}>
             <TouchableOpacity 
-              style={styles.quantityButton} 
+              style={[
+                styles.quantityButton, 
+                quantity <= 1 && styles.disabledButton
+              ]} 
               onPress={decreaseQuantity}
+              disabled={quantity <= 1}
             >
-              <Text style={styles.quantityButtonText}>-</Text>
+              <Text style={[
+                styles.quantityButtonText,
+                quantity <= 1 && styles.disabledButtonText
+              ]}>-</Text>
             </TouchableOpacity>
             
             <Text style={styles.quantityValue}>{quantity}</Text>
             
             <TouchableOpacity 
-              style={styles.quantityButton}
+              style={[
+                styles.quantityButton,
+                quantity >= availableStock && styles.disabledButton
+              ]}
               onPress={increaseQuantity}
+              disabled={quantity >= availableStock}
             >
-              <Text style={styles.quantityButtonText}>+</Text>
+              <Text style={[
+                styles.quantityButtonText,
+                quantity >= availableStock && styles.disabledButtonText
+              ]}>+</Text>
             </TouchableOpacity>
           </View>
         </View>
         
         <TouchableOpacity 
-          style={styles.addToCartButton}
+          style={[
+            styles.addToCartButton,
+            !isInStock && styles.disabledAddToCartButton
+          ]}
           onPress={addToCart}
+          disabled={!isInStock}
         >
-          <Text style={styles.addToCartButtonText}>Add to Cart</Text>
+          <Text style={styles.addToCartButtonText}>
+            {isInStock ? 'Add to Cart' : 'Out of Stock'}
+          </Text>
         </TouchableOpacity>
         
         <View style={styles.descriptionContainer}>
@@ -209,6 +267,12 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 6
+  },
+  // Stock status text
+  stockStatusText: {
+    fontSize: 16,
+    fontWeight: '500',
     marginBottom: 15
   },
   quantityContainer: {
@@ -230,11 +294,19 @@ const styles = StyleSheet.create({
   quantityButton: {
     padding: 10,
     width: 40,
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9'
+  },
+  disabledButton: {
+    backgroundColor: '#f0f0f0',
   },
   quantityButtonText: {
     fontSize: 18,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#2196f3'
+  },
+  disabledButtonText: {
+    color: '#aaa'
   },
   quantityValue: {
     paddingHorizontal: 15,
@@ -246,6 +318,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 20
+  },
+  disabledAddToCartButton: {
+    backgroundColor: '#cccccc'
   },
   addToCartButtonText: {
     color: '#fff',

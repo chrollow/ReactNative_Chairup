@@ -258,7 +258,22 @@ const styles = StyleSheet.create({
   applyText: {
     color: '#fff',
     fontWeight: 'bold',
-  }
+  },
+  stockBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#ff6b6b',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    zIndex: 2,
+  },
+  stockBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
 });
 
 export default styles;

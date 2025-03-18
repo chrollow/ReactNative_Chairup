@@ -101,6 +101,9 @@ const ProductsScreen = ({ navigation }) => {
     
     try {
       const filtered = stateProducts.products.filter(item => {
+        // Check if product is in stock
+        const inStock = (item.stockQuantity > 0);
+        
         // Check if name includes search query (case insensitive)
         const matchesSearch = !searchQuery || 
           (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -113,7 +116,8 @@ const ProductsScreen = ({ navigation }) => {
         const matchesCategory = selectedCategories.length === 0 || 
           (item.category && selectedCategories.includes(item.category));
         
-        return matchesSearch && matchesPrice && matchesCategory;
+        // Return true only if product is in stock AND matches all other filters
+        return inStock && matchesSearch && matchesPrice && matchesCategory;
       });
       
       console.log('Filtered products:', filtered.length);
@@ -170,6 +174,9 @@ const ProductsScreen = ({ navigation }) => {
       item.image.startsWith('data:image')
     );
     
+    // Check stock status
+    const isLowStock = item.stockQuantity && item.stockQuantity <= 5;
+    
     console.log(`Rendering product: ${item.name}, Image URL: ${item.image}`);
     
     return (
@@ -194,11 +201,20 @@ const ProductsScreen = ({ navigation }) => {
             <Ionicons name="image-outline" size={40} color="#999" />
           </View>
         )}
+        
         {item.category && (
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{item.category}</Text>
           </View>
         )}
+        
+        {/* Add low stock indicator */}
+        {isLowStock && (
+          <View style={styles.stockBadge}>
+            <Text style={styles.stockBadgeText}>Low Stock</Text>
+          </View>
+        )}
+        
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{item.name || 'Unnamed Product'}</Text>
           <Text style={styles.productPrice}>${parseFloat(item.price).toFixed(2) || '0.00'}</Text>
