@@ -4,6 +4,8 @@ import ProductsScreen from '../screens/Products/ProductsScreen';
 import ProductDetailScreen from '../screens/Products/ProductDetailScreen';
 import CartScreen from '../screens/Products/CartScreen';
 import CheckoutScreen from '../screens/Products/CheckoutScreen';
+import OrdersScreen from '../screens/Orders/OrdersScreen'; 
+import OrderDetailsScreen from '../screens/Orders/OrderDetailsScreen';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +31,16 @@ const ProductNavigator = () => {
         name="Checkout"
         component={CheckoutScreen}
         options={{ title: 'Checkout' }}
+      />
+      <Stack.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{ title: 'My Orders' }}
+      />
+      <Stack.Screen
+        name="OrderDetails"
+        component={OrderDetailsScreen}
+        options={{ title: 'Order Details' }}
       />
     </Stack.Navigator>
   );

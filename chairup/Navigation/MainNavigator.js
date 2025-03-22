@@ -23,7 +23,7 @@ const MainNavigator = () => {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'ProductNavigator') {
             iconName = focused ? 'grid' : 'grid-outline';
-          } else if (route.name === 'ProfileTab') {
+          } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'AdminTab') {
             iconName = focused ? 'settings' : 'settings-outline';
@@ -52,7 +52,7 @@ const MainNavigator = () => {
         }}
       />
       <Tab.Screen 
-        name="ProfileTab" 
+        name="Profile" 
         component={ProfileScreen} 
         options={{ 
           headerShown: true,

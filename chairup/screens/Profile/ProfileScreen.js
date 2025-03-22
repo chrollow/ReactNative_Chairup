@@ -11,6 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 
 import { AuthContext } from '../../Context/Store/AuthGlobal';
 import { logoutUser } from '../../Context/Actions/Auth.actions';
@@ -20,6 +21,7 @@ import styles from './styles/ProfileScreen.styles';
 const API_URL = "http://192.168.1.39:3000/api";
 
 const ProfileScreen = () => {
+  const navigation = useNavigation();
   const { stateUser, dispatch } = useContext(AuthContext);
   const [user, setUser] = useState({});
   const [name, setName] = useState('');
@@ -240,6 +242,26 @@ const ProfileScreen = () => {
           </View>
         )}
 
+        {/* Add My Orders Section */}
+        <View style={styles.ordersSection}>
+          <Text style={styles.sectionTitle}>My Orders</Text>
+          
+          <TouchableOpacity 
+            style={styles.orderButton}
+            onPress={() => navigation.navigate('ProductNavigator', { screen: 'Orders' })}
+          >
+            <View style={styles.orderButtonContent}>
+              <Ionicons name="receipt-outline" size={24} color="#4a6da7" />
+              <Text style={styles.orderButtonText}>View My Orders</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#ccc" />
+          </TouchableOpacity>
+          
+          <Text style={styles.orderDescription}>
+            Track your order status, view order history, and manage returns
+          </Text>
+        </View>
+
         <TouchableOpacity 
           style={[styles.button, styles.logoutButton]} 
           onPress={handleLogout}
@@ -250,5 +272,37 @@ const ProfileScreen = () => {
     </ScrollView>
   );
 };
+
+// Add these styles to your styles/ProfileScreen.styles.js file
+
+// ordersSection: {
+//   marginTop: 30,
+//   marginBottom: 20,
+// },
+// orderButton: {
+//   flexDirection: 'row',
+//   alignItems: 'center',
+//   justifyContent: 'space-between',
+//   backgroundColor: '#f8f8f8',
+//   borderRadius: 10,
+//   padding: 15,
+//   marginVertical: 10,
+// },
+// orderButtonContent: {
+//   flexDirection: 'row',
+//   alignItems: 'center',
+// },
+// orderButtonText: {
+//   fontSize: 16,
+//   fontWeight: '500',
+//   color: '#333',
+//   marginLeft: 10,
+// },
+// orderDescription: {
+//   fontSize: 14,
+//   color: '#888',
+//   marginTop: 5,
+//   paddingLeft: 5,
+// },
 
 export default ProfileScreen;

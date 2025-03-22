@@ -125,6 +125,35 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  ordersSection: {
+    marginTop: 30,
+    marginBottom: 20,
+  },
+  orderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+  },
+  orderButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  orderButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginLeft: 10,
+  },
+  orderDescription: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 5,
+    paddingLeft: 5,
+  },
 });
 
 export default styles;
