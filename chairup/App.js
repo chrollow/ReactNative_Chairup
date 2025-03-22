@@ -9,6 +9,8 @@ import MainNavigator from './Navigation/MainNavigator';
 import AuthGlobal, { AuthContext } from './Context/Store/AuthGlobal';
 import ProductProvider from './Context/Store/ProductGlobal';
 import * as SecureStore from 'expo-secure-store';
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
 
 const Stack = createStackNavigator();
 
@@ -105,14 +107,16 @@ const AppNavigator = () => {
 
 export default function App() {
   return (
-    <View style={{ flex: 1 }}>
-      <AuthGlobal>
-        <ProductProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
-        </ProductProvider>
-      </AuthGlobal>
-    </View>
+    <Provider store={store}>
+      <View style={{ flex: 1 }}>
+        <AuthGlobal>
+          <ProductProvider>
+            <NavigationContainer>
+              <AppNavigator />
+            </NavigationContainer>
+          </ProductProvider>
+        </AuthGlobal>
+      </View>
+    </Provider>
   );
 }

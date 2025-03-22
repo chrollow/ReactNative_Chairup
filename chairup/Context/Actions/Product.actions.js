@@ -101,3 +101,128 @@ export const deleteProduct = async (id) => {
     };
   }
 };
+
+// Cart and Checkout Actions
+export const processCheckout = async (orderData) => {
+  try {
+    const token = await SecureStore.getItemAsync('userToken');
+    
+    const response = await axios.post(
+      `${API_URL}/orders`,
+      orderData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return { success: true, order: response.data };
+  } catch (error) {
+    console.error("Error processing checkout:", error);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || "Failed to process checkout" 
+    };
+  }
+};
+
+// Get user's orders
+export const getUserOrders = async () => {
+  try {
+    const token = await SecureStore.getItemAsync('userToken');
+    
+    const response = await axios.get(
+      `${API_URL}/orders/user`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return { success: true, orders: response.data };
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    return { success: false, orders: [] };
+  }
+};
+
+// Review and Rating Actions
+export const addReview = async (productId, reviewData) => {
+  try {
+    const token = await SecureStore.getItemAsync('userToken');
+    
+    const response = await axios.post(
+      `${API_URL}/products/${productId}/reviews`,
+      reviewData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return { success: true, review: response.data };
+  } catch (error) {
+    console.error("Error adding review:", error);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || "Failed to add review" 
+    };
+  }
+};
+
+export const updateReview = async (productId, reviewId, reviewData) => {
+  try {
+    const token = await SecureStore.getItemAsync('userToken');
+    
+    const response = await axios.put(
+      `${API_URL}/products/${productId}/reviews/${reviewId}`,
+      reviewData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return { success: true, review: response.data };
+  } catch (error) {
+    console.error("Error updating review:", error);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || "Failed to update review" 
+    };
+  }
+};
+
+export const getProductReviews = async (productId) => {
+  try {
+    const response = await axios.get(`${API_URL}/products/${productId}/reviews`);
+    return { success: true, reviews: response.data };
+  } catch (error) {
+    console.error("Error fetching product reviews:", error);
+    return { success: false, reviews: [] };
+  }
+};
+
+export const getUserReviews = async () => {
+  try {
+    const token = await SecureStore.getItemAsync('userToken');
+    
+    const response = await axios.get(
+      `${API_URL}/reviews/user`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return { success: true, reviews: response.data };
+  } catch (error) {
+    console.error("Error fetching user reviews:", error);
+    return { success: false, reviews: [] };
+  }
+};

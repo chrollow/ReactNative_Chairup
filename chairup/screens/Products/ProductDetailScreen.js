@@ -1,9 +1,9 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  Image, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ProductContext } from '../../Context/Store/ProductGlobal';
 import axios from 'axios';
+import ProductReviews from '../../components/Reviews/ProductReviews';
 
 const API_URL = "http://192.168.1.39:3000/api";
 
@@ -21,7 +22,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Fetch product details directly from API
   useEffect(() => {
     const fetchProduct = async () => {
@@ -43,10 +44,10 @@ const ProductDetailScreen = ({ route, navigation }) => {
         setLoading(false);
       }
     };
-    
+
     fetchProduct();
   }, [productId]);
-  
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -54,7 +55,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       </View>
     );
   }
-  
+
   if (!product) {
     return (
       <View style={styles.centerContainer}>
@@ -65,7 +66,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   // Get available stock quantity, defaulting to 0 if not available
   const availableStock = product.stockQuantity || 0;
-  
+
   // Check if the product is in stock
   const isInStock = availableStock > 0;
 
@@ -91,7 +92,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       Alert.alert("Insufficient Stock", `Only ${availableStock} items available.`);
       return;
     }
-    
+
     dispatch({
       type: 'ADD_TO_CART',
       payload: {
@@ -99,7 +100,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
         quantity
       }
     });
-    
+
     Alert.alert(
       "Success",
       `${product.name} added to cart`,
@@ -120,62 +121,62 @@ const ProductDetailScreen = ({ route, navigation }) => {
       return { text: `In Stock: ${availableStock} available`, color: "#47c266" };
     }
   };
-  
+
   const stockStatus = getStockStatus();
 
   return (
     <ScrollView style={styles.container}>
       {product.image ? (
-        <Image 
-          source={{ uri: product.image }} 
+        <Image
+          source={{ uri: product.image }}
           style={styles.productImage}
           onError={(e) => {
             console.log('Error loading image:', e.nativeEvent?.error);
           }}
         />
       ) : (
-        <View style={[styles.productImage, { 
-          backgroundColor: '#e1e1e1', 
-          justifyContent: 'center', 
-          alignItems: 'center' 
+        <View style={[styles.productImage, {
+          backgroundColor: '#e1e1e1',
+          justifyContent: 'center',
+          alignItems: 'center'
         }]}>
           <Ionicons name="image-outline" size={40} color="#999" />
         </View>
       )}
-      
+
       <View style={styles.infoContainer}>
         <Text style={styles.productName}>{product.name}</Text>
         <Text style={styles.productPrice}>${product.price}</Text>
-        
+
         <View style={styles.ratingContainer}>
           {[1, 2, 3, 4, 5].map(star => (
-            <Ionicons 
+            <Ionicons
               key={star}
-              name="star" 
-              size={20} 
-              color="#FFD700" 
+              name="star"
+              size={20}
+              color="#FFD700"
             />
           ))}
           <Text style={styles.ratingText}>(5.0)</Text>
         </View>
-        
+
         <Text style={styles.categoryText}>
           Category: {product.category || 'Office Chair'}
         </Text>
-        
+
         {/* Stock status indicator */}
         <Text style={[styles.stockStatusText, { color: stockStatus.color }]}>
           {stockStatus.text}
         </Text>
-        
+
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityLabel}>Quantity:</Text>
           <View style={styles.quantityControls}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.quantityButton, 
+                styles.quantityButton,
                 quantity <= 1 && styles.disabledButton
-              ]} 
+              ]}
               onPress={decreaseQuantity}
               disabled={quantity <= 1}
             >
@@ -184,10 +185,10 @@ const ProductDetailScreen = ({ route, navigation }) => {
                 quantity <= 1 && styles.disabledButtonText
               ]}>-</Text>
             </TouchableOpacity>
-            
+
             <Text style={styles.quantityValue}>{quantity}</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[
                 styles.quantityButton,
                 quantity >= availableStock && styles.disabledButton
@@ -202,8 +203,8 @@ const ProductDetailScreen = ({ route, navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[
             styles.addToCartButton,
             !isInStock && styles.disabledAddToCartButton
@@ -215,7 +216,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
             {isInStock ? 'Add to Cart' : 'Out of Stock'}
           </Text>
         </TouchableOpacity>
-        
+
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionTitle}>Description</Text>
           <Text style={styles.descriptionText}>
@@ -223,6 +224,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
           </Text>
         </View>
       </View>
+
+      {/* Reviews Section */}
+      <View style={styles.reviewsSection}>
+        <ProductReviews productId={product._id} />
+      </View>
+
     </ScrollView>
   );
 };
@@ -339,7 +346,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: '#333'
+  },
+  reviewsSection: {
+    marginTop: 20,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   }
+
 });
 
 export default ProductDetailScreen;
