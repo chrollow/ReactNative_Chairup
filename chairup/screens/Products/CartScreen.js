@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProductContext } from '../../Context/Store/ProductGlobal';
+import { useIsFocused } from '@react-navigation/native';
 
 const API_URL = "http://192.168.1.39:3000/api";
 const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
@@ -18,20 +19,51 @@ const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 const CartScreen = ({ navigation }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
   const [total, setTotal] = useState(0);
+  const isFocused = useIsFocused(); // Add this to detect when screen is focused
   
   // Calculate total whenever cart changes
   useEffect(() => {
-    let sum = 0;
-    stateProducts.cart.forEach(item => {
-      sum += (item.product.price * item.quantity);
-    });
-    setTotal(sum);
-  }, [stateProducts.cart]);
+    if (stateProducts && stateProducts.cart) {
+      let sum = 0;
+      stateProducts.cart.forEach(item => {
+        sum += (item.product.price * item.quantity);
+      });
+      setTotal(sum);
+    }
+  }, [stateProducts.cart, isFocused]); // Add isFocused to dependencies
+  
+  // Add this effect to refresh cart when screen is focused
+  useEffect(() => {
+    // If the screen is focused, force a re-render
+    if (isFocused) {
+      console.log("Cart screen is focused, refreshing cart data");
+      // You can add additional refresh logic here if needed
+    }
+  }, [isFocused]);
   
   const updateQuantity = (productId, change) => {
     const cartItem = stateProducts.cart.find(item => item.product._id === productId);
+    if (!cartItem) return;
+    
     const newQuantity = cartItem.quantity + change;
     
+    // When increasing quantity, check against available stock
+    if (change > 0) {
+      // Get the current stock from the product
+      const availableStock = cartItem.product.stockQuantity;
+      
+      // Check if we're trying to add more than what's available
+      if (cartItem.quantity >= availableStock) {
+        Alert.alert(
+          "Maximum Stock Reached",
+          `Sorry, there are only ${availableStock} items available in stock.`,
+          [{ text: "OK" }]
+        );
+        return;
+      }
+    }
+    
+    // Continue with normal quantity update logic
     if (newQuantity > 0) {
       dispatch({
         type: 'UPDATE_CART_ITEM',
@@ -108,9 +140,9 @@ const CartScreen = ({ navigation }) => {
           {product.image ? (
             <Image 
               source={{ 
-                uri: item.product.image?.startsWith('/uploads/') 
-                  ? `${BASE_URL}${item.product.image}` 
-                  : item.product.image || 'https://via.placeholder.com/100'
+                uri: product.image.startsWith('/uploads/') 
+                  ? `${BASE_URL}${product.image}` 
+                  : product.image || 'https://via.placeholder.com/100'
               }} 
               style={styles.productImage}
               onError={(e) => {
@@ -161,20 +193,21 @@ const CartScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Shopping Cart</Text>
-        {stateProducts.cart.length > 0 && (
+        {stateProducts.cart && stateProducts.cart.length > 0 && (
           <TouchableOpacity onPress={clearCart}>
             <Text style={styles.clearButton}>Clear All</Text>
           </TouchableOpacity>
         )}
       </View>
       
-      {stateProducts.cart.length > 0 ? (
+      {stateProducts.cart && stateProducts.cart.length > 0 ? (
         <FlatList
           data={stateProducts.cart}
           renderItem={renderCartItem}
           keyExtractor={(item) => item.product._id.toString()}
           style={styles.cartList}
           contentContainerStyle={styles.cartListContent}
+          extraData={stateProducts.cart} // Add this to force re-render when cart changes
         />
       ) : (
         <View style={styles.emptyCart}>
@@ -189,7 +222,7 @@ const CartScreen = ({ navigation }) => {
         </View>
       )}
       
-      {stateProducts.cart.length > 0 && (
+      {stateProducts.cart && stateProducts.cart.length > 0 && (
         <View style={styles.footer}>
           <View style={styles.totalContainer}>
             <Text style={styles.totalText}>Total:</Text>
@@ -354,7 +387,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginRight: 5
-  }
+  },
+  disabledQuantityButton: {
+    backgroundColor: '#b0bec5', // Gray color for disabled state
+    opacity: 0.7
+  },
 });
 
 export default CartScreen;
