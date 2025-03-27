@@ -16,10 +16,14 @@ import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
 import FormContainer from './Shared/FormContainer';
 import Input from './Shared/Input';
 import { registerUser } from '../Context/Actions/Auth.actions';
+
+// Add this line to define API_URL
+const API_URL = "http://192.168.1.39:3000/api";
 
 var { width } = Dimensions.get("window");
 
@@ -85,7 +89,7 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   const handleRegister = async () => {
-    // Basic validation
+    // Your existing validation
     if (!email || !name || !phone || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
@@ -102,24 +106,52 @@ const RegisterScreen = ({ navigation }) => {
     }
     
     try {
-      const result = await registerUser({
-        name,
-        email,
-        phone,
-        password,
-        profileImage: image
-      });
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('password', password);
       
-      if (result.success) {
+      // Add profile image with correct structure
+      if (image) {
+        const filename = image.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('profileImage', {
+          uri: Platform.OS === 'ios' ? image.replace('file://', '') : image,
+          name: filename,
+          type
+        });
+      }
+      
+      console.log("Sending registration data with image");
+      
+      // Make the API call
+      const response = await axios.post(
+        `${API_URL}/auth/register`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+      console.log("Registration response:", response.data);
+      
+      if (response.data) {
         Alert.alert(
           "Registration Successful",
           "You have successfully registered!",
           [{ text: "OK", onPress: () => navigation.navigate('Login') }]
         );
-      } else {
-        setError(result.message);
       }
     } catch (error) {
+      console.error("Registration error:", error.response?.data || error.message);
+      setError(error.response?.data?.message || 'Registration failed');
       Alert.alert('Error', 'Registration failed. Please try again.');
     }
   };

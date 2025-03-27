@@ -95,7 +95,33 @@ const AdminProductEditScreen = ({ route, navigation }) => {
   // Function to create a new product
   const createProduct = async (productData) => {
     try {
-      const response = await API.post('/products', productData);
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', productData.name);
+      formData.append('price', productData.price.toString());
+      formData.append('category', productData.category);
+      formData.append('description', productData.description);
+      formData.append('stockQuantity', productData.stockQuantity.toString());
+      
+      // Add image if it exists and it's a local file
+      if (productData.image && productData.image.startsWith('file://')) {
+        const filename = productData.image.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('image', {
+          uri: productData.image,
+          name: filename,
+          type
+        });
+      }
+      
+      const response = await API.post('/products', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Error creating product:', error);
@@ -106,7 +132,33 @@ const AdminProductEditScreen = ({ route, navigation }) => {
   // Function to update an existing product
   const updateProduct = async (id, productData) => {
     try {
-      const response = await API.put(`/products/${id}`, productData);
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', productData.name);
+      formData.append('price', productData.price.toString());
+      formData.append('category', productData.category);
+      formData.append('description', productData.description);
+      formData.append('stockQuantity', productData.stockQuantity.toString());
+      
+      // Add image if it exists and it's a local file
+      if (productData.image && productData.image.startsWith('file://')) {
+        const filename = productData.image.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('image', {
+          uri: productData.image,
+          name: filename,
+          type
+        });
+      }
+      
+      const response = await API.put(`/products/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Error updating product:', error);

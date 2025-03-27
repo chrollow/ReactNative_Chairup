@@ -12,6 +12,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ProductContext } from '../../Context/Store/ProductGlobal';
 
+const API_URL = "http://192.168.1.39:3000/api";
+const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
+
 const CartScreen = ({ navigation }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
   const [total, setTotal] = useState(0);
@@ -104,9 +107,15 @@ const CartScreen = ({ navigation }) => {
         >
           {product.image ? (
             <Image 
-              source={{ uri: product.image }} 
+              source={{ 
+                uri: item.product.image?.startsWith('/uploads/') 
+                  ? `${BASE_URL}${item.product.image}` 
+                  : item.product.image || 'https://via.placeholder.com/100'
+              }} 
               style={styles.productImage}
-              onError={() => console.log('Error loading image')}
+              onError={(e) => {
+                console.log('Error loading cart image:', e.nativeEvent?.error);
+              }}
             />
           ) : (
             <View style={[styles.productImage, { backgroundColor: '#e1e1e1', justifyContent: 'center', alignItems: 'center' }]}>

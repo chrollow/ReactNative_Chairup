@@ -15,6 +15,7 @@ import axios from 'axios';
 import ProductReviews from '../../components/Reviews/ProductReviews';
 
 const API_URL = "http://192.168.1.39:3000/api";
+const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { productId } = route.params;
@@ -128,7 +129,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
     <ScrollView style={styles.container}>
       {product.image ? (
         <Image
-          source={{ uri: product.image }}
+          source={{ uri: `${BASE_URL}${product.image}` }} // Use BASE_URL instead of API_URL
           style={styles.productImage}
           onError={(e) => {
             console.log('Error loading image:', e.nativeEvent?.error);

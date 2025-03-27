@@ -10,9 +10,12 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Register a new user
 exports.register = async (req, res) => {
-  const { name, email, password, phone, profileImage } = req.body;
-
   try {
+    const { name, email, phone, password } = req.body;
+    
+    // Add profile image path if uploaded
+    const profileImage = req.file ? `/uploads/${req.file.filename}` : '';
+    
     // Check if user already exists
     let user = await User.findOne({ email });
     
@@ -95,11 +98,13 @@ exports.login = async (req, res) => {
 
 // Update user profile
 exports.updateProfile = async (req, res) => {
-  // Get the user ID from the request (set by auth middleware)
-  const userId = req.userId;
-  const { name, email, phone, profileImage } = req.body;
-
   try {
+    const { name, email, phone } = req.body;
+    const userId = req.userId;
+    
+    // Add profile image if uploaded
+    const profileImage = req.file ? `/uploads/${req.file.filename}` : undefined;
+
     // First check if email is already taken by another user
     if (email) {
       const existingUser = await User.findOne({ 
@@ -138,7 +143,7 @@ exports.updateProfile = async (req, res) => {
         name: updatedUser.name,
         email: updatedUser.email,
         phone: updatedUser.phone,
-        profileImage: updatedUser.profile_image
+        profileImage: updatedUser.profile_image // Make sure this field name is consistent
       }
     });
   } catch (error) {

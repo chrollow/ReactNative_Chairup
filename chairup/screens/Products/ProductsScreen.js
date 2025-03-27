@@ -23,6 +23,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import API from '../../utils/api';
 
 const API_URL = "http://192.168.1.39:3000/api";
+const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 
 const ProductsScreen = ({ navigation }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
@@ -171,11 +172,12 @@ const ProductsScreen = ({ navigation }) => {
     const isValidImageUrl = item.image && (
       item.image.startsWith('http') || 
       item.image.startsWith('file:///') || 
-      item.image.startsWith('data:image')
+      item.image.startsWith('data:image') ||
+      item.image.startsWith('/uploads/') // Add this condition
     );
     
-    // Check stock status
-    const isLowStock = item.stockQuantity && item.stockQuantity <= 5;
+    // Define isLowStock variable here
+    const isLowStock = item.stockQuantity > 0 && item.stockQuantity <= 5;
     
     console.log(`Rendering product: ${item.name}, Image URL: ${item.image}`);
     
@@ -186,7 +188,11 @@ const ProductsScreen = ({ navigation }) => {
       >
         {isValidImageUrl ? (
           <Image 
-            source={{ uri: item.image }}
+            source={{ 
+              uri: item.image.startsWith('/uploads/') 
+                ? `${BASE_URL}${item.image}` // Use BASE_URL for server images
+                : item.image // Use as-is for complete URLs
+            }}
             style={styles.productImage}
             onError={(e) => {
               console.log('Error loading image for:', item.name, e.nativeEvent?.error);

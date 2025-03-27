@@ -14,6 +14,9 @@ import { ProductContext } from '../../Context/Store/ProductGlobal';
 import API from '../../utils/api';
 import TouchableScale from '../../components/TouchableScale';
 
+const API_URL = "http://192.168.1.39:3000/api";
+const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
+
 const AdminProductsScreen = ({ navigation }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
   const [loading, setLoading] = useState(false);
@@ -114,17 +117,17 @@ const AdminProductsScreen = ({ navigation }) => {
         style={styles.productItem}
         onPress={() => handleEditProduct(item)}
       >
-        {hasValidImage ? (
-          <Image 
-            source={{ uri: item.image }} 
-            style={styles.productImage}
-            onError={() => console.log(`Failed to load image for ${item?.name || 'Unknown product'}`)}
-          />
-        ) : (
-          <View style={[styles.productImage, { backgroundColor: '#e1e1e1', justifyContent: 'center', alignItems: 'center' }]}>
-            <Ionicons name="image-outline" size={30} color="#999" />
-          </View>
-        )}
+        <Image
+          source={{ 
+            uri: item.image?.startsWith('/uploads/') 
+              ? `${BASE_URL}${item.image}` 
+              : item.image || 'https://via.placeholder.com/100'
+          }}
+          style={styles.productImage}
+          onError={(e) => {
+            console.log('Error loading admin product image:', e.nativeEvent?.error);
+          }}
+        />
         
         <View style={styles.productContent}>
           <Text style={styles.productName}>{item?.name || 'Unnamed Product'}</Text>

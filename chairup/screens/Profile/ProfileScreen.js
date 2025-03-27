@@ -5,7 +5,8 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert
+  Alert,
+  Platform  // Add this import
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ import Input from '../Shared/Input';
 import styles from './styles/ProfileScreen.styles';
 
 const API_URL = "http://192.168.1.39:3000/api";
+const BASE_URL = "http://192.168.1.39:3000"; // Add BASE_URL for images
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -85,35 +87,63 @@ const ProfileScreen = () => {
 
   const updateProfile = async () => {
     try {
+      setMessage('');
+      
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      
+      // Add profile image if it's a new image (not a URL)
+      if (image && (image.startsWith('file://') || image.startsWith('content://'))) {
+        const filename = image.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('profileImage', {
+          uri: Platform.OS === 'ios' ? image.replace('file://', '') : image,
+          name: filename,
+          type
+        });
+        
+        console.log("Adding image to profile update:", {
+          uri: image,
+          name: filename,
+          type
+        });
+      }
+      
       const token = await SecureStore.getItemAsync('userToken');
+      console.log("Updating profile with token:", token ? "Token exists" : "No token");
+      
+      // Use the correct endpoint - try the users endpoint instead of auth
+      // Make sure this endpoint matches your backend route
       const response = await axios.put(
-        `${API_URL}/auth/profile`,
-        {
-          name,
-          email,
-          phone,
-          profileImage: image
-        },
+        `${API_URL}/auth/profile`,  // Use /auth/profile instead of /users/profile
+        formData,
         {
           headers: {
+            'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${token}`
           }
         }
       );
+      
+      console.log("Profile update response:", response.data);
 
       if (response.data) {
-        // Update local state
+        // Update the user in state and storage
         const updatedUser = {
           ...user,
           name,
           email,
           phone,
-          profileImage: image
+          profileImage: response.data.user.profileImage // Make sure this matches the response structure
         };
         
         await SecureStore.setItemAsync('userData', JSON.stringify(updatedUser));
         
-        // Update context
         dispatch({
           type: 'SET_CURRENT_USER',
           payload: {
@@ -126,6 +156,7 @@ const ProfileScreen = () => {
         setIsEditing(false);
       }
     } catch (error) {
+      console.error("Profile update error:", error.response?.data || error.message);
       setMessage(error.response?.data?.message || 'Failed to update profile');
     }
   };
@@ -147,7 +178,14 @@ const ProfileScreen = () => {
       <View style={styles.header}>
         <View style={styles.profileImageContainer}>
           {image ? (
-            <Image source={{ uri: image }} style={styles.profileImage} />
+            <Image 
+              source={{ 
+                uri: image.startsWith('/uploads/') 
+                  ? `${BASE_URL}${image}` 
+                  : image 
+              }} 
+              style={styles.profileImage} 
+            />
           ) : (
             <View style={[styles.profileImage, { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' }]}>
               <Ionicons name="person" size={80} color="#999" />

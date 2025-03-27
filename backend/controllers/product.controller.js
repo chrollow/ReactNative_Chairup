@@ -28,55 +28,58 @@ exports.getProductById = async (req, res) => {
 
 // Create product
 exports.createProduct = async (req, res) => {
-  const { name, price, category, description, image, stockQuantity } = req.body;
-  
-  if (!name || !price) {
-    return res.status(400).send({ message: "Product name and price are required" });
-  }
-  
   try {
+    const { name, price, category, description, stockQuantity } = req.body;
+    
+    // Get the image path if an image was uploaded
+    const image = req.file ? `/uploads/${req.file.filename}` : '';
+
     const product = new Product({
       name,
-      price: Number(price),
-      category: category || 'Office', 
-      description: description || '', 
-      image: image || '', 
-      stockQuantity: Number(stockQuantity) || 0
+      price,
+      category,
+      description,
+      image,
+      stockQuantity: stockQuantity || 0
     });
-    
+
     const savedProduct = await product.save();
-    res.status(201).send(savedProduct);
+    res.status(201).json(savedProduct);
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
 // Update product
 exports.updateProduct = async (req, res) => {
-  const { id } = req.params;
-  const { name, price, category, description, image, stockQuantity } = req.body;
-  
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id, 
-      {
-        name,
-        price: Number(price),
-        category,
-        description, 
-        image,
-        stockQuantity: Number(stockQuantity)
-      }, 
+    const { name, price, category, description, stockQuantity } = req.body;
+    const updateData = {
+      name,
+      price,
+      category,
+      description,
+      stockQuantity
+    };
+
+    // Only update the image if a new one was uploaded
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      updateData,
       { new: true }
     );
-    
-    if (!updatedProduct) {
-      return res.status(404).send({ message: "Product not found" });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-    
-    res.status(200).send(updatedProduct);
+
+    res.status(200).json(product);
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 

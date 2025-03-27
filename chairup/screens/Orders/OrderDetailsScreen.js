@@ -14,6 +14,7 @@ import * as SecureStore from 'expo-secure-store';
 import moment from 'moment';
 
 const API_URL = "http://192.168.1.39:3000/api"; // Update with your server IP
+const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 
 const OrderDetailsScreen = ({ route, navigation }) => {
   const { orderId } = route.params;
@@ -183,9 +184,16 @@ const OrderDetailsScreen = ({ route, navigation }) => {
             <View style={styles.productImageContainer}>
               {item.product.image ? (
                 <Image 
-                  source={{ uri: item.product.image }}
+                  source={{ 
+                    uri: item.product.image.startsWith('/uploads/') 
+                      ? `${BASE_URL}${item.product.image}` 
+                      : item.product.image 
+                  }}
                   style={styles.productImage}
                   resizeMode="cover"
+                  onError={(e) => {
+                    console.log('Error loading order item image:', e.nativeEvent?.error);
+                  }}
                 />
               ) : (
                 <View style={[styles.productImage, styles.noImage]}>

@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');  // Add this import
 
 // Create a new order
 exports.createOrder = async (req, res) => {
@@ -93,8 +94,12 @@ exports.getOrderById = async (req, res) => {
       return res.status(404).send({ message: "Order not found" });
     }
     
+    // First check if user is admin - need to get the user from database
+    const user = await User.findById(req.userId);
+    const isAdmin = user && user.is_admin;
+    
     // Check if order belongs to current user or if user is admin
-    if (order.user._id.toString() !== req.userId && !req.isAdmin) {
+    if (order.user._id.toString() !== req.userId && !isAdmin) {
       return res.status(403).send({ message: "Not authorized to view this order" });
     }
     
