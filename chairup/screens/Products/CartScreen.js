@@ -172,8 +172,12 @@ const CartScreen = ({ navigation }) => {
           <Text style={styles.quantityText}>{quantity}</Text>
           
           <TouchableOpacity
-            style={styles.quantityButton}
+            style={[
+              styles.quantityButton,
+              quantity >= product.stockQuantity && styles.disabledQuantityButton
+            ]}
             onPress={() => updateQuantity(product._id, 1)}
+            disabled={quantity >= product.stockQuantity}
           >
             <Ionicons name="add" size={16} color="#fff" />
           </TouchableOpacity>
