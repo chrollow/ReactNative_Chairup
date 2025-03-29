@@ -16,6 +16,7 @@ import { ProductContext } from '../../Context/Store/ProductGlobal';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { clearCart } from '../../redux/slices/cartSlice';
+import { clearServerCart } from '../../Context/Actions/Product.actions';
 
 const API_URL = "http://192.168.1.39:3000/api"; // Update with your server IP
 
@@ -117,12 +118,19 @@ const CheckoutScreen = ({ navigation }) => {
         }
       );
       
-      // If successful, clear both carts (Redux and Context)
+      // Clear Redux cart
       dispatch(clearCart());
       
-      // Only clear the context cart if dispatch is available
+      // Clear Context cart if available
       if (stateProducts && typeof stateProducts.dispatch === 'function') {
         stateProducts.dispatch({ type: 'CLEAR_CART' });
+      }
+      
+      // Also clear the server cart to ensure complete synchronization
+      try {
+        await clearServerCart();
+      } catch (error) {
+        console.error('Failed to clear server cart:', error);
       }
       
       Alert.alert(
