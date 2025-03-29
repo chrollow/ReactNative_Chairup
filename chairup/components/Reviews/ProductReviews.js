@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { 
   View, 
   Text, 
@@ -15,7 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductReviews, createReview, editReview } from '../../redux/slices/reviewSlice';
 import * as SecureStore from 'expo-secure-store';
 
-const ProductReviews = ({ productId }) => {
+const ProductReviews = forwardRef(({ productId }, ref) => {
   const dispatch = useDispatch();
   const { productReviews, loading, error } = useSelector(state => state.reviews);
   const [userId, setUserId] = useState(null);
@@ -190,6 +190,13 @@ const ProductReviews = ({ productId }) => {
     );
   };
 
+  // Expose the openReviewModal method
+  useImperativeHandle(ref, () => ({
+    openReviewModal: () => {
+      setShowReviewModal(true);
+    }
+  }));
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -285,7 +292,7 @@ const ProductReviews = ({ productId }) => {
       </Modal>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

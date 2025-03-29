@@ -6,7 +6,8 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -235,18 +236,33 @@ const OrderDetailsScreen = ({ route, navigation }) => {
         </View>
       </View>
 
-      {order.status === 'delivered' && !order.isReviewed && (
-        <TouchableOpacity 
-          style={styles.reviewButton}
-          onPress={() => navigation.navigate('ProductsList', { 
-            screen: 'Products',
-            reviewMode: true,
-            orderItems: order.orderItems
-          })}
-        >
-          <Ionicons name="star-outline" size={18} color="#fff" style={styles.buttonIcon} />
-          <Text style={styles.reviewButtonText}>Write a Review</Text>
-        </TouchableOpacity>
+      {order.status === 'delivered' && (
+        <View style={styles.reviewButtonContainer}>
+          <Text style={styles.reviewHeading}>Happy with your purchase?</Text>
+          {order.orderItems.map((orderItem, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={styles.reviewButton}
+              onPress={() => {
+                // Make sure we have a valid product ID before navigating
+                if (orderItem.product && orderItem.product._id) {
+                  navigation.navigate('ProductDetail', { 
+                    productId: orderItem.product._id,
+                    name: orderItem.product.name || 'Product',
+                    openReviewModal: true  // Flag to auto-open review modal
+                  });
+                } else {
+                  Alert.alert('Error', 'Product information not available');
+                }
+              }}
+            >
+              <Text style={styles.reviewButtonText}>
+                Review "{orderItem.product?.name || 'Product'}"
+              </Text>
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
+          ))}
+        </View>
       )}
     </ScrollView>
   );
@@ -422,23 +438,39 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#e91e63'
   },
+  reviewButtonContainer: {
+    marginHorizontal: 15,
+    marginBottom: 25,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2
+  },
+  reviewHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10
+  },
   reviewButton: {
     flexDirection: 'row',
     backgroundColor: '#4a6da7',
     borderRadius: 8,
     padding: 15,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 15,
-    marginBottom: 25
-  },
-  buttonIcon: {
-    marginRight: 8
+    marginBottom: 10
   },
   reviewButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold'
+  },
+  buttonIcon: {
+    marginRight: 8
   },
   statusTrackerContainer: {
     backgroundColor: '#fff',

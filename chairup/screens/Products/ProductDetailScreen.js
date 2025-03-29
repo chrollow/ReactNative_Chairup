@@ -25,6 +25,9 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Add a ref for the ProductReviews component
+  const productReviewsRef = React.useRef(null);
+
   // Fetch product details directly from API
   useEffect(() => {
     const fetchProduct = async () => {
@@ -49,6 +52,16 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
     fetchProduct();
   }, [productId]);
+
+  // Check if we should open the review modal automatically
+  useEffect(() => {
+    if (route.params?.openReviewModal && productId) {
+      // Find the ProductReviews component ref and open the modal
+      if (productReviewsRef.current) {
+        productReviewsRef.current.openReviewModal();
+      }
+    }
+  }, [route.params?.openReviewModal, productId]);
 
   if (loading) {
     return (
@@ -243,7 +256,10 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
       {/* Reviews Section */}
       <View style={styles.reviewsSection}>
-        <ProductReviews productId={product._id} />
+        <ProductReviews 
+          productId={product._id} 
+          ref={productReviewsRef}
+        />
       </View>
 
     </ScrollView>
