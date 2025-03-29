@@ -30,8 +30,17 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
   useEffect(() => {
     const getUserDetails = async () => {
       try {
-        const storedUserId = await SecureStore.getItemAsync('userId');
-        setUserId(storedUserId);
+        // Get the full userData object instead of just userId
+        const userDataString = await SecureStore.getItemAsync('userData');
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          // The ID is likely stored as 'id' in the userData object
+          const storedUserId = userData.id; // or userData._id if that's how it's structured
+          console.log("Retrieved userId from userData:", storedUserId);
+          setUserId(storedUserId);
+        } else {
+          console.log("No user data found in SecureStore");
+        }
         
         if (productId) {
           dispatch(fetchProductReviews(productId));
@@ -44,6 +53,18 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
     
     getUserDetails();
   }, [productId, orders]);
+
+  // Add this new effect to monitor userId changes
+  useEffect(() => {
+    if (userId) {
+      console.log("User ID has been set to:", userId);
+      // Force a re-render of reviews with the new userId
+      if (productId && productReviews[productId]) {
+        const userReview = productReviews[productId].find(review => review.user?._id === userId);
+        console.log("User's review found:", userReview ? userReview._id : "None");
+      }
+    }
+  }, [userId, productReviews]);
 
   // Check if user has purchased this product
   const checkIfProductPurchased = async (productId) => {
@@ -93,6 +114,13 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
     };
     
     if (editingReview) {
+      // Log for debugging
+      console.log("Updating review:", editingReview._id);
+      console.log("With data:", { rating, comment });
+
+      // Show loading state
+      Alert.alert('Updating...', 'Please wait while we update your review.');
+      
       // Update existing review
       dispatch(editReview({
         productId,
@@ -104,13 +132,21 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
           setEditingReview(null);
           setRating(5);
           setComment('');
+          
+          // Force refresh reviews
+          dispatch(fetchProductReviews(productId));
+          
           Alert.alert('Success', 'Your review has been updated');
         } else {
-          Alert.alert('Error', result.payload || 'Failed to update review');
+          console.error("Review update error:", result);
+          Alert.alert('Error', result.payload || 'Failed to update review. Please try again.');
         }
+      }).catch(error => {
+        console.error("Review update exception:", error);
+        Alert.alert('Error', 'An unexpected error occurred. Please try again.');
       });
     } else {
-      // Create new review
+      // Create new review code remains the same
       dispatch(createReview({
         productId,
         reviewData
@@ -157,9 +193,18 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
     );
   };
 
+  // Check if the current user has a review
+  const getUserReview = () => {
+    if (!userId || !productReviews[productId]) return null;
+    return productReviews[productId].find(review => review.user?._id === userId);
+  };
+
   // Render a single review item
   const renderReviewItem = ({ item }) => {
     const isUsersReview = item.user?._id === userId;
+    
+    // Log for debugging
+    console.log("Review item:", item._id, "User ID:", userId, "Is user's review:", isUsersReview);
     
     return (
       <View style={styles.reviewItem}>
@@ -176,10 +221,14 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
           
           {isUsersReview && (
             <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => openEditReview(item)}
+              style={styles.prominentEditButton}
+              onPress={() => {
+                console.log("Edit button pressed for review:", item._id);
+                openEditReview(item);
+              }}
             >
-              <Text style={styles.editButtonText}>Edit</Text>
+              <Ionicons name="create" size={16} color="#fff" style={{ marginRight: 5 }} />
+              <Text style={styles.prominentEditButtonText}>Edit</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -189,6 +238,22 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
         </View>
         
         <Text style={styles.reviewComment}>{item.comment}</Text>
+        
+        {/* Add a second edit button at the bottom of the review for better visibility */}
+        {isUsersReview && (
+          <View style={styles.bottomEditContainer}>
+            <TouchableOpacity 
+              style={styles.secondaryEditButton}
+              onPress={() => {
+                console.log("Bottom edit button pressed for review:", item._id);
+                openEditReview(item);
+              }}
+            >
+              <Ionicons name="pencil" size={16} color="#2196f3" style={{ marginRight: 5 }} />
+              <Text style={styles.secondaryEditButtonText}>Edit Your Review</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -212,16 +277,6 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
           </Text>
         </View>
       </View>
-      
-      {purchaseVerified && !productReviews[productId]?.some(review => review.user?._id === userId) && (
-        <TouchableOpacity 
-          style={styles.addReviewButton}
-          onPress={() => setShowReviewModal(true)}
-        >
-          <Ionicons name="create-outline" size={18} color="#fff" style={styles.addReviewIcon} />
-          <Text style={styles.addReviewText}>Write a Review</Text>
-        </TouchableOpacity>
-      )}
       
       {loading ? (
         <ActivityIndicator size="large" color="#4a6da7" style={styles.loader} />
@@ -349,6 +404,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+  editYourReviewContainer: {
+    marginBottom: 15,
+  },
+  editYourReviewButton: {
+    flexDirection: 'row',
+    backgroundColor: '#2196f3',
+    padding: 12,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editYourReviewButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
   reviewsList: {
     paddingBottom: 20,
   },
@@ -375,15 +446,35 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 12,
   },
-  editButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: 'rgba(74, 109, 167, 0.1)',
-    borderRadius: 3,
+  prominentEditButton: {
+    flexDirection: 'row',
+    backgroundColor: '#2196f3',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    alignItems: 'center',
   },
-  editButtonText: {
-    color: '#4a6da7',
+  prominentEditButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
     fontSize: 12,
+  },
+  bottomEditContainer: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 10,
+  },
+  secondaryEditButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 5,
+  },
+  secondaryEditButtonText: {
+    color: '#2196f3',
+    fontSize: 14,
+    fontWeight: '500',
   },
   ratingContainer: {
     flexDirection: 'row',
