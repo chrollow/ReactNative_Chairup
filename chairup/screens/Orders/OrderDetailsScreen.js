@@ -265,6 +265,27 @@ const OrderDetailsScreen = ({ route, navigation }) => {
           ))}
         </View>
       )}
+
+      {/* Render review item with image */}
+      {order.reviews && order.reviews.map((review, index) => (
+        <View key={index} style={styles.section}>
+          <Text style={styles.sectionTitle}>Review by {review.user.name}</Text>
+          <Text>{review.comment}</Text>
+          {review.image && (
+            <View style={styles.reviewImageContainer}>
+              <Image
+                source={{ 
+                  uri: review.image.startsWith('/uploads/') 
+                    ? `${BASE_URL}${review.image}` 
+                    : review.image 
+                }}
+                style={styles.reviewImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+        </View>
+      ))}
     </ScrollView>
   );
 };
@@ -570,6 +591,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     marginLeft: 5
+  },
+  reviewImageContainer: {
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  reviewImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    resizeMode: 'cover',
   }
 });
 

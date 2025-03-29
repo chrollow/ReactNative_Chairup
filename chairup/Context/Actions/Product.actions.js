@@ -178,19 +178,21 @@ export const updateReview = async (productId, reviewId, reviewData) => {
   try {
     const token = await SecureStore.getItemAsync('userToken');
     
+    // Make sure to use the correct API URL
     const response = await axios.put(
       `${API_URL}/products/${productId}/reviews/${reviewId}`,
       reviewData,
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data' // Important for FormData
         }
       }
     );
     
     return { success: true, review: response.data };
   } catch (error) {
-    console.error("Error updating review:", error);
+    console.error("Error updating review:", error.message, error.response?.data);
     return { 
       success: false, 
       message: error.response?.data?.message || "Failed to update review" 

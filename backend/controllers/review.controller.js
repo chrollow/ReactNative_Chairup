@@ -24,6 +24,7 @@ exports.createReview = async (req, res) => {
       status: { $in: ['delivered', 'shipped'] }
     });
     
+    // Create new review object
     const review = new Review({
       rating: Number(rating),
       comment,
@@ -31,6 +32,11 @@ exports.createReview = async (req, res) => {
       user: req.userId,
       verified: !!purchaseVerified
     });
+    
+    // Add image if one was uploaded
+    if (req.file) {
+      review.image = `/uploads/${req.file.filename}`;
+    }
     
     const savedReview = await review.save();
     
@@ -53,6 +59,10 @@ exports.updateReview = async (req, res) => {
     const { rating, comment } = req.body;
     const { id, reviewId } = req.params;
     
+    console.log("Updating review:", reviewId, "for product:", id);
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file ? "File present" : "No file");
+    
     // Find review and check ownership
     const review = await Review.findById(reviewId);
     if (!review) {
@@ -66,6 +76,18 @@ exports.updateReview = async (req, res) => {
     review.rating = Number(rating);
     review.comment = comment;
     
+    // Update image if a new one was uploaded
+    if (req.file) {
+      // Store the old image path if we need to delete it later
+      const oldImage = review.image;
+      
+      // Update with new image path
+      review.image = `/uploads/${req.file.filename}`;
+      
+      // Optional: Delete the old image file to save space
+      // This would require fs module and path checking
+    }
+    
     const updatedReview = await review.save();
     
     // Return populated review
@@ -77,6 +99,7 @@ exports.updateReview = async (req, res) => {
       
     res.status(200).send(populatedReview);
   } catch (error) {
+    console.error("Error updating review:", error);
     res.status(500).send({ message: error.message });
   }
 };
