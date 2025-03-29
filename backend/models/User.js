@@ -27,6 +27,10 @@ const UserSchema = new mongoose.Schema({
   is_admin: {
     type: Boolean,
     default: false
+  },
+  pushToken: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: { 

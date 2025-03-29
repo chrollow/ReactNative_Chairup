@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import moment from 'moment';
+import { sendOrderStatusNotification } from '../../utils/notifications';
 
 const API_URL = "http://192.168.1.39:3000/api"; // Update with your server IP
 const BASE_URL = "http://192.168.1.39:3000"; // Add this line for image URLs
@@ -87,7 +88,7 @@ const AdminOrderDetailsScreen = ({ route, navigation }) => {
       setLoading(true);
       const token = await SecureStore.getItemAsync('userToken');
       
-      await axios.put(
+      const response = await axios.put(
         `${API_URL}/orders/${orderId}/status`,
         { status: newStatus },
         {
@@ -96,6 +97,9 @@ const AdminOrderDetailsScreen = ({ route, navigation }) => {
           }
         }
       );
+      
+      // Send notification to the user about status update
+      await sendOrderStatusNotification(orderId, newStatus, order.user?._id);
       
       Alert.alert('Success', 'Order status updated');
       fetchOrderDetails();

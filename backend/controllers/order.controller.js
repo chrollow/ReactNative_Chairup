@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');  // Add this import
+const { notifyOrderStatusChange } = require('../services/notificationService'); // Add this import
 
 // Create a new order
 exports.createOrder = async (req, res) => {
@@ -132,6 +133,9 @@ exports.updateOrderStatus = async (req, res) => {
     }
     
     const updatedOrder = await order.save();
+    
+    // Notify about the order status change
+    await notifyOrderStatusChange(order._id, status);
     
     res.status(200).send(updatedOrder);
   } catch (error) {

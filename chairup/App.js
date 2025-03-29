@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,8 +12,64 @@ import * as SecureStore from 'expo-secure-store';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import { fetchUserCart } from './Context/Actions/Product.actions';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
+import { createRef } from 'react';
+import { savePushTokenToServer } from './utils/notifications';
+
+// Create a navigation ref
+export const navigationRef = createRef();
 
 const Stack = createStackNavigator();
+
+// Configure notifications to show alerts when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+// Register for push notifications (add this function to your App component)
+async function registerForPushNotificationsAsync() {
+  let token;
+  
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    
+    if (finalStatus !== 'granted') {
+      alert('Failed to get push token for push notification!');
+      return;
+    }
+    
+    token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log('Push notification token:', token);
+    
+    // Save token to server
+    await savePushTokenToServer(token);
+  } else {
+    alert('Must use physical device for push notifications');
+  }
+
+  if (Platform.OS === 'android') {
+    Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#4a6da7',
+    });
+  }
+
+  return token;
+}
 
 // Create a separate Navigator component to access the AuthContext
 const AppNavigator = () => {
@@ -118,12 +174,52 @@ const AppNavigator = () => {
 };
 
 export default function App() {
+  const notificationListener = useRef();
+  const responseListener = useRef();
+
+  useEffect(() => {
+    // Register for push notifications
+    registerForPushNotificationsAsync();
+
+    // This listener handles notifications received while the app is foregrounded
+    notificationListener.current = Notifications.addNotificationReceivedListener(
+      notification => {
+        console.log('Notification received in foreground:', notification);
+      }
+    );
+
+    // This listener handles when a user taps on a notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(
+      response => {
+        const { orderId } = response.notification.request.content.data;
+        
+        // Navigate to the OrderDetails screen
+        // This assumes you have a ref to your navigation
+        if (orderId && navigationRef.current) {
+          // For customers
+          navigationRef.current.navigate('ProductNavigator', {
+            screen: 'OrderDetails',
+            params: { orderId }
+          });
+          
+          // If the user is admin, you might need different navigation
+          // You could check user role here and navigate accordingly
+        }
+      }
+    );
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
+
   return (
     <Provider store={store}>
       <View style={{ flex: 1 }}>
         <AuthGlobal>
           <ProductProvider>
-            <NavigationContainer>
+            <NavigationContainer ref={navigationRef}>
               <AppNavigator />
             </NavigationContainer>
           </ProductProvider>
