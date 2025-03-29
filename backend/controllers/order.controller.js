@@ -158,3 +158,23 @@ exports.getAllOrders = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
+
+// Verify if user has purchased a product
+exports.verifyProductPurchase = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const userId = req.userId;
+
+    // Check if there's a delivered order containing this product for this user
+    const purchaseVerified = await Order.exists({
+      user: userId,
+      'orderItems.product': productId,
+      status: { $in: ['delivered', 'shipped'] }
+    });
+    
+    res.status(200).send({ verified: !!purchaseVerified });
+  } catch (error) {
+    console.error('Purchase verification error:', error);
+    res.status(500).send({ message: error.message });
+  }
+};

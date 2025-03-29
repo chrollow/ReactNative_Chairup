@@ -1,10 +1,10 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   Image,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Alert,
   ActivityIndicator
@@ -14,6 +14,7 @@ import { ProductContext } from '../../Context/Store/ProductGlobal';
 import axios from 'axios';
 import ProductReviews from '../../components/Reviews/ProductReviews';
 import { syncCartItem } from '../../Context/Actions/Product.actions';
+import { useSelector } from 'react-redux';
 
 const API_URL = "http://192.168.1.39:3000/api";
 const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
@@ -24,9 +25,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Get reviews data from Redux state
+  const { productReviews } = useSelector(state => state.reviews);
 
   // Add a ref for the ProductReviews component
-  const productReviewsRef = React.useRef(null);
+  const productReviewsRef = useRef(null);
 
   // Fetch product details directly from API
   useEffect(() => {
@@ -55,13 +59,15 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   // Check if we should open the review modal automatically
   useEffect(() => {
-    if (route.params?.openReviewModal && productId) {
+    if (route.params?.openReviewModal && product?._id) {
       // Find the ProductReviews component ref and open the modal
-      if (productReviewsRef.current) {
-        productReviewsRef.current.openReviewModal();
-      }
+      setTimeout(() => {
+        if (productReviewsRef.current) {
+          productReviewsRef.current.openReviewModal();
+        }
+      }, 500); // Small delay to ensure component is mounted
     }
-  }, [route.params?.openReviewModal, productId]);
+  }, [route.params?.openReviewModal, product]);
 
   if (loading) {
     return (
@@ -84,6 +90,18 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   // Check if the product is in stock
   const isInStock = availableStock > 0;
+
+  // Calculate average rating from reviews
+  const calculateAverageRating = () => {
+    const reviews = productReviews[productId] || [];
+    if (reviews.length === 0) return 0;
+    
+    const sum = reviews.reduce((total, review) => total + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
+  };
+  
+  const avgRating = calculateAverageRating();
+  const reviewCount = (productReviews[productId] || []).length;
 
   const increaseQuantity = () => {
     // Only increase if quantity is less than available stock
@@ -153,11 +171,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   const stockStatus = getStockStatus();
 
-  return (
-    <ScrollView style={styles.container}>
+  // Render the product details as the header of our FlatList
+  const renderHeader = () => (
+    <>
       {product.image ? (
         <Image
-          source={{ uri: `${BASE_URL}${product.image}` }} // Use BASE_URL instead of API_URL
+          source={{ uri: `${BASE_URL}${product.image}` }}
           style={styles.productImage}
           onError={(e) => {
             console.log('Error loading image:', e.nativeEvent?.error);
@@ -181,12 +200,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
           {[1, 2, 3, 4, 5].map(star => (
             <Ionicons
               key={star}
-              name="star"
+              name={star <= avgRating ? "star" : star - avgRating < 1 && star - avgRating > 0 ? "star-half" : "star-outline"}
               size={20}
               color="#FFD700"
             />
           ))}
-          <Text style={styles.ratingText}>(5.0)</Text>
+          <Text style={styles.ratingText}>({avgRating}) {reviewCount > 0 ? `${reviewCount} reviews` : 'No reviews'}</Text>
         </View>
 
         <Text style={styles.categoryText}>
@@ -254,15 +273,27 @@ const ProductDetailScreen = ({ route, navigation }) => {
         </View>
       </View>
 
-      {/* Reviews Section */}
-      <View style={styles.reviewsSection}>
-        <ProductReviews 
-          productId={product._id} 
-          ref={productReviewsRef}
-        />
+      <View style={styles.reviewsHeader}>
+        <Text style={styles.reviewsTitle}>Customer Reviews</Text>
       </View>
+    </>
+  );
 
-    </ScrollView>
+  return (
+    <View style={styles.container}>
+      <FlatList
+        ListHeaderComponent={renderHeader}
+        data={[]} // Empty array since we're just using this for the header
+        keyExtractor={() => 'header'}
+        renderItem={() => null}
+        ListFooterComponent={
+          <ProductReviews 
+            productId={product?._id} 
+            ref={productReviewsRef}
+          />
+        }
+      />
+    </View>
   );
 };
 
@@ -308,7 +339,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 6
   },
-  // Stock status text
   stockStatusText: {
     fontSize: 16,
     fontWeight: '500',
@@ -379,13 +409,18 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#333'
   },
-  reviewsSection: {
+  reviewsHeader: {
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    paddingHorizontal: 15
+  },
+  reviewsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10
   }
-
 });
 
 export default ProductDetailScreen;

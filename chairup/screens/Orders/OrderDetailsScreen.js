@@ -239,16 +239,17 @@ const OrderDetailsScreen = ({ route, navigation }) => {
       {order.status === 'delivered' && (
         <View style={styles.reviewButtonContainer}>
           <Text style={styles.reviewHeading}>Happy with your purchase?</Text>
-          {order.orderItems.map((orderItem, index) => (
+          {order.orderItems && order.orderItems.map((orderItem, index) => (
             <TouchableOpacity 
               key={index}
               style={styles.reviewButton}
               onPress={() => {
-                // Make sure we have a valid product ID before navigating
-                if (orderItem.product && orderItem.product._id) {
+                // Properly access the product data
+                const product = orderItem.product;
+                if (product && product._id) {
                   navigation.navigate('ProductDetail', { 
-                    productId: orderItem.product._id,
-                    name: orderItem.product.name || 'Product',
+                    productId: product._id,
+                    name: product.name || 'Product',
                     openReviewModal: true  // Flag to auto-open review modal
                   });
                 } else {

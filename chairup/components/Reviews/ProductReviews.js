@@ -19,49 +19,52 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
   const dispatch = useDispatch();
   const { productReviews, loading, error } = useSelector(state => state.reviews);
   const [userId, setUserId] = useState(null);
+  const [rating, setRating] = useState(5); // Default to 5 stars
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [editingReview, setEditingReview] = useState(null);
   const [purchaseVerified, setPurchaseVerified] = useState(false);
   const orders = useSelector(state => state.orders.items);
 
-  // Get user ID from secure storage
+  // Get user ID from secure storage and fetch reviews
   useEffect(() => {
-    const getUserData = async () => {
+    const getUserDetails = async () => {
       try {
-        const userData = await SecureStore.getItemAsync('userData');
-        if (userData) {
-          const user = JSON.parse(userData);
-          setUserId(user._id);
-          
-          // Check if user has purchased this product
-          const hasPurchased = checkIfProductPurchased(productId);
-          setPurchaseVerified(hasPurchased);
+        const storedUserId = await SecureStore.getItemAsync('userId');
+        setUserId(storedUserId);
+        
+        if (productId) {
+          dispatch(fetchProductReviews(productId));
+          checkIfProductPurchased(productId);
         }
-      } catch (err) {
-        console.error('Failed to get user data', err);
+      } catch (error) {
+        console.error('Error getting user details:', error);
       }
     };
     
-    getUserData();
+    getUserDetails();
   }, [productId, orders]);
 
-  // Fetch reviews for this product
-  useEffect(() => {
-    dispatch(fetchProductReviews(productId));
-  }, [dispatch, productId]);
-
   // Check if user has purchased this product
-  const checkIfProductPurchased = (productId) => {
-    if (!orders || orders.length === 0) return false;
-    
-    // Check all orders for this product
-    return orders.some(order => 
-      order.items && order.items.some(item => 
-        item.product && item.product._id === productId
-      )
-    );
+  const checkIfProductPurchased = async (productId) => {
+    try {
+      const userId = await SecureStore.getItemAsync('userId');
+      if (!userId) return false;
+      
+      // Check if this user has any completed orders with this product
+      const hasOrdered = orders.some(order => 
+        order.status === 'delivered' && 
+        order.orderItems.some(item => 
+          item.product && item.product._id === productId
+        )
+      );
+      
+      setPurchaseVerified(hasOrdered);
+      return hasOrdered;
+    } catch (error) {
+      console.error('Error checking purchase status:', error);
+      return false;
+    }
   };
 
   // Calculate average rating

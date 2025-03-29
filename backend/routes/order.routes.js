@@ -8,6 +8,7 @@ const adminMiddleware = require('../middleware/admin.middleware');
 router.post('/', authMiddleware, orderController.createOrder);
 router.get('/user', authMiddleware, orderController.getUserOrders);
 router.get('/:id', authMiddleware, orderController.getOrderById);
+router.get('/verify-purchase/:productId', authMiddleware, orderController.verifyProductPurchase);
 
 // Admin routes
 router.get('/', [authMiddleware, adminMiddleware], orderController.getAllOrders);
