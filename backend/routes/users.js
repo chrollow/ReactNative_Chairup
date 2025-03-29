@@ -30,4 +30,24 @@ router.post('/push-token', auth, async (req, res) => {
   }
 });
 
+// Clear user's push token
+router.post('/clear-push-token', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Clear the push token
+    user.pushToken = null;
+    await user.save();
+    
+    res.status(200).json({ message: 'Push token cleared successfully' });
+  } catch (error) {
+    console.error('Error clearing push token:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -79,17 +79,38 @@ const notifyOrderStatusChange = async (orderId, status) => {
     // Get notification message
     const message = getNotificationMessage(orderId, status);
     
-    // Send push notification
-    await sendPushNotification(
-      user.pushToken, 
-      message, 
-      { 
-        orderId: orderId.toString(),
-        screen: 'OrderDetails'
+    try {
+      // Send push notification
+      const result = await sendPushNotification(
+        user.pushToken, 
+        message, 
+        { 
+          orderId: orderId.toString(),
+          screen: 'OrderDetails'
+        }
+      );
+      
+      // Check if token is invalid
+      if (result.data && result.data.some(item => 
+          item.status === "error" && 
+          (item.message === "DeviceNotRegistered" || item.message === "InvalidCredentials")
+      )) {
+        console.log(`Invalid push token for user ${user._id}, clearing it`);
+        user.pushToken = null;
+        await user.save();
+      } else {
+        console.log(`Notification sent to user ${user._id} for order ${orderId}`);
       }
-    );
-    
-    console.log(`Notification sent to user ${user._id} for order ${orderId}`);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+      
+      // If there's an error with the token, clear it
+      if (error.message && error.message.includes("DeviceNotRegistered")) {
+        user.pushToken = null;
+        await user.save();
+        console.log(`Cleared invalid push token for user ${user._id}`);
+      }
+    }
   } catch (error) {
     console.error('Error in notifyOrderStatusChange:', error);
   }

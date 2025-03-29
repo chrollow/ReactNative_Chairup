@@ -132,14 +132,16 @@ const AppNavigator = () => {
               user: parsedUserData
             }
           });
+          
+          // Update push token whenever app starts with a valid user
+          registerForPushNotificationsAsync();
         }
       }
       setIsLoading(false);
     };
-
+    
     bootstrapAsync();
-    checkAuthStatus(); // Call this in useEffect at app startup
-  }, [dispatch]);
+  }, []);
 
   if (isLoading) {
     return null; // or a loading screen

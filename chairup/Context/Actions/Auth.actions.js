@@ -103,6 +103,24 @@ export const logoutUser = async (dispatch) => {
     const userData = await SecureStore.getItemAsync('userData');
     const token = await SecureStore.getItemAsync('userToken');
     
+    // Clear push token on server before logout
+    if (token) {
+      try {
+        await axios.post(
+          `${API_URL}/users/clear-push-token`,
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+        console.log("Push token cleared on server");
+      } catch (err) {
+        console.error("Error clearing push token:", err);
+      }
+    }
+    
     // Clear local storage
     await SecureStore.deleteItemAsync("userToken");
     await SecureStore.deleteItemAsync("userData");
