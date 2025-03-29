@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { 
   Text, 
   View, 
@@ -38,6 +39,9 @@ const ProductsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
+  // Add this line to get reviews from Redux
+  const { productReviews } = useSelector(state => state.reviews);
+  
   // Fetch products from API
   const fetchProducts = async () => {
     try {
@@ -72,7 +76,16 @@ const ProductsScreen = ({ navigation }) => {
       return () => {}; // cleanup function
     }, [])
   );
-  
+
+  // Add this helper function to calculate average ratings
+  const calculateAverageRating = (productId) => {
+    const reviews = productReviews[productId] || [];
+    if (reviews.length === 0) return 0;
+    
+    const sum = reviews.reduce((total, review) => total + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
+  };
+
   // Extract all unique categories from products
   const allCategories = stateProducts.products && stateProducts.products.length > 0 
     ? [...new Set(stateProducts.products.map(p => p.category).filter(Boolean))]
@@ -225,15 +238,18 @@ const ProductsScreen = ({ navigation }) => {
           <Text style={styles.productName}>{item.name || 'Unnamed Product'}</Text>
           <Text style={styles.productPrice}>${parseFloat(item.price).toFixed(2) || '0.00'}</Text>
           <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map(star => (
-              <Ionicons 
-                key={star}
-                name={star <= (item.rating || 0) ? "star" : "star-outline"} 
-                size={16} 
-                color="#FFD700" 
-              />
-            ))}
-            <Text style={styles.ratingText}>({item.numReviews || 0})</Text>
+            {[1, 2, 3, 4, 5].map(star => {
+              const avgRating = parseFloat(calculateAverageRating(item._id) || 0);
+              return (
+                <Ionicons 
+                  key={star}
+                  name={star <= avgRating ? "star" : (star - avgRating < 1 && star - avgRating > 0) ? "star-half" : "star-outline"} 
+                  size={16} 
+                  color="#FFD700" 
+                />
+              );
+            })}
+            <Text style={styles.ratingText}>({(productReviews[item._id] || []).length})</Text>
           </View>
         </View>
       </TouchableOpacity>
