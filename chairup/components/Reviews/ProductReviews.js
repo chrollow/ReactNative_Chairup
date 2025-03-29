@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductReviews, createReview, editReview } from '../../redux/slices/reviewSlice';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
+import moment from 'moment';
 
 const ProductReviews = forwardRef(({ productId }, ref) => {
   const dispatch = useDispatch();
@@ -221,16 +222,40 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
     return (
       <View style={styles.reviewItem}>
         <View style={styles.reviewHeader}>
-          <View>
-            <Text style={styles.reviewAuthor}>
-              {item.user?.name || 'Anonymous'} 
-              {item.verified && <Text style={styles.verifiedBadge}> ✓ Verified Purchase</Text>}
-            </Text>
-            <Text style={styles.reviewDate}>
-              {new Date(item.createdAt).toLocaleDateString()}
-            </Text>
+          {/* User Avatar and Info */}
+          <View style={styles.reviewAuthorContainer}>
+            {item.user?.profileImage ? (
+              <Image 
+                source={{ 
+                  uri: item.user.profileImage.startsWith('/uploads/') 
+                    ? `${BASE_URL}${item.user.profileImage}`
+                    : item.user.profileImage
+                }}
+                style={styles.reviewAuthorAvatar}
+                onError={(e) => {
+                  console.log("Failed to load profile image:", e.nativeEvent?.error);
+                }}
+              />
+            ) : (
+              <View style={styles.defaultAvatarContainer}>
+                <Text style={styles.defaultAvatarText}>
+                  {item.user?.name ? item.user.name.charAt(0).toUpperCase() : '?'}
+                </Text>
+              </View>
+            )}
+            
+            <View style={styles.authorDetails}>
+              <Text style={styles.reviewAuthor}>
+                {item.user?.name || 'Anonymous'} 
+                {item.verified && <Text style={styles.verifiedBadge}> ✓ Verified Purchase</Text>}
+              </Text>
+              <Text style={styles.reviewDate}>
+                {item.created_at ? moment(item.created_at).format('MMM DD, YYYY') : 'No date'}
+              </Text>
+            </View>
           </View>
           
+          {/* Edit Button */}
           {isUsersReview && (
             <TouchableOpacity 
               style={styles.prominentEditButton}
@@ -260,11 +285,11 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
                   : item.image 
               }}
               style={styles.reviewImage}
+              resizeMode="cover"
             />
           </View>
         )}
         
-        {/* Add a second edit button at the bottom of the review for better visibility */}
         {isUsersReview && (
           <View style={styles.bottomEditContainer}>
             <TouchableOpacity 
@@ -541,7 +566,36 @@ const styles = StyleSheet.create({
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewAuthorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  reviewAuthorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  defaultAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4a6da7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  defaultAvatarText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  authorDetails: {
+    flex: 1,
   },
   reviewAuthor: {
     fontWeight: 'bold',
@@ -552,8 +606,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   reviewDate: {
-    color: '#888',
     fontSize: 12,
+    color: '#777',
+    marginTop: 2,
   },
   prominentEditButton: {
     flexDirection: 'row',

@@ -274,7 +274,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       </View>
 
       <View style={styles.reviewsHeader}>
-        <Text style={styles.reviewsTitle}>Customer Reviews</Text>
+        {/* <Text style={styles.reviewsTitle}>Customer Reviews</Text> */}
       </View>
     </>
   );
