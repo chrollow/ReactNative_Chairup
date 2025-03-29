@@ -11,6 +11,7 @@ import ProductProvider from './Context/Store/ProductGlobal';
 import * as SecureStore from 'expo-secure-store';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
+import { fetchUserCart } from './Context/Actions/Product.actions';
 
 const Stack = createStackNavigator();
 
@@ -20,13 +21,14 @@ const AppNavigator = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState(null);
 
-  // Add this function to check auth status on app launch
+  // Modify the checkAuthStatus function
   const checkAuthStatus = async () => {
     try {
       const token = await SecureStore.getItemAsync('userToken');
       const userData = await SecureStore.getItemAsync('userData');
       
       if (token && userData) {
+        // Set authenticated user
         dispatch({
           type: 'SET_CURRENT_USER',
           payload: {
@@ -34,6 +36,16 @@ const AppNavigator = () => {
             user: JSON.parse(userData)
           }
         });
+        
+        // Fetch and set cart
+        const cartResult = await fetchUserCart();
+        if (cartResult.success) {
+          dispatch({
+            type: 'SET_CART',
+            payload: cartResult.cart
+          });
+        }
+        
         return true;
       }
       return false;

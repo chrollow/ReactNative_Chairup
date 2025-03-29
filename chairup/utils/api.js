@@ -26,4 +26,48 @@ API.interceptors.request.use(
   }
 );
 
+// Get user's cart
+export const getUserCart = async () => {
+  try {
+    const response = await API.get('/carts');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    throw error;
+  }
+};
+
+// Add/update cart item
+export const updateCartItem = async (productId, quantity) => {
+  try {
+    const response = await API.post('/carts/items', { productId, quantity });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating cart:', error);
+    throw error;
+  }
+};
+
+// Remove item from cart
+export const removeCartItem = async (productId) => {
+  try {
+    const response = await API.delete(`/carts/items/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error removing item from cart:', error);
+    throw error;
+  }
+};
+
+// Clear cart
+export const clearCart = async () => {
+  try {
+    const response = await API.delete('/carts');
+    return response.data;
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    throw error;
+  }
+};
+
 export default API;

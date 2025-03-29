@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProductContext } from '../../Context/Store/ProductGlobal';
 import axios from 'axios';
 import ProductReviews from '../../components/Reviews/ProductReviews';
+import { syncCartItem } from '../../Context/Actions/Product.actions';
 
 const API_URL = "http://192.168.1.39:3000/api";
 const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
@@ -87,13 +88,14 @@ const ProductDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const addToCart = () => {
+  const addToCart = async () => {
     // Double-check that we're not adding more than the available stock
     if (quantity > availableStock) {
       Alert.alert("Insufficient Stock", `Only ${availableStock} items available.`);
       return;
     }
 
+    // Update local state first for immediate feedback
     dispatch({
       type: 'ADD_TO_CART',
       payload: {
@@ -101,6 +103,19 @@ const ProductDetailScreen = ({ route, navigation }) => {
         quantity
       }
     });
+
+    // Sync with server
+    try {
+      // Get current quantity in cart
+      const existingItem = stateProducts.cart.find(item => item.product._id === product._id);
+      const totalQuantity = existingItem 
+        ? existingItem.quantity + quantity 
+        : quantity;
+        
+      await syncCartItem(product._id, totalQuantity);
+    } catch (error) {
+      console.error('Failed to sync cart with server:', error);
+    }
 
     Alert.alert(
       "Success",

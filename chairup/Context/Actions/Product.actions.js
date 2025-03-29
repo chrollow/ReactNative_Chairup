@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { getUserCart, updateCartItem, removeCartItem, clearCart as clearCartAPI } from '../../utils/api';
 
 // Update this to your server's IP/domain
 const API_URL = "http://192.168.1.39:3000/api";
@@ -224,5 +225,49 @@ export const getUserReviews = async () => {
   } catch (error) {
     console.error("Error fetching user reviews:", error);
     return { success: false, reviews: [] };
+  }
+};
+
+// Fetch user's cart from database
+export const fetchUserCart = async () => {
+  try {
+    const cart = await getUserCart();
+    return { success: true, cart: cart.items || [] };
+  } catch (error) {
+    console.error("Error fetching user cart:", error);
+    return { success: false, cart: [] };
+  }
+};
+
+// Sync cart item with database
+export const syncCartItem = async (productId, quantity) => {
+  try {
+    const result = await updateCartItem(productId, quantity);
+    return { success: true, cart: result.items || [] };
+  } catch (error) {
+    console.error("Error syncing cart item:", error);
+    return { success: false, message: error.response?.data?.message };
+  }
+};
+
+// Remove item from cart in database
+export const deleteCartItem = async (productId) => {
+  try {
+    const result = await removeCartItem(productId);
+    return { success: true, cart: result.items || [] };
+  } catch (error) {
+    console.error("Error removing cart item:", error);
+    return { success: false };
+  }
+};
+
+// Clear cart in database
+export const clearServerCart = async () => {
+  try {
+    await clearCartAPI();
+    return { success: true };
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    return { success: false };
   }
 };

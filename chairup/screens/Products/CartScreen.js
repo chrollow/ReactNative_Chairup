@@ -12,6 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ProductContext } from '../../Context/Store/ProductGlobal';
 import { useIsFocused } from '@react-navigation/native';
+import { syncCartItem, deleteCartItem, clearServerCart, fetchUserCart } from '../../Context/Actions/Product.actions';
+import * as SecureStore from 'expo-secure-store';
 
 const API_URL = "http://192.168.1.39:3000/api";
 const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
@@ -19,7 +21,26 @@ const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 const CartScreen = ({ navigation }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
   const [total, setTotal] = useState(0);
-  const isFocused = useIsFocused(); // Add this to detect when screen is focused
+  const [userId, setUserId] = useState(null);
+  const isFocused = useIsFocused();
+  
+  // Get current user ID for debugging
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const userData = await SecureStore.getItemAsync('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUserId(user.id || user._id);
+          console.log("Current cart user:", user.id || user._id);
+        }
+      } catch (err) {
+        console.error('Failed to get user data', err);
+      }
+    };
+    
+    getUserData();
+  }, []);
   
   // Calculate total whenever cart changes
   useEffect(() => {
@@ -30,18 +51,39 @@ const CartScreen = ({ navigation }) => {
       });
       setTotal(sum);
     }
-  }, [stateProducts.cart, isFocused]); // Add isFocused to dependencies
+  }, [stateProducts.cart, isFocused]);
   
-  // Add this effect to refresh cart when screen is focused
+  // Explicitly refresh cart data when screen is focused
   useEffect(() => {
-    // If the screen is focused, force a re-render
     if (isFocused) {
       console.log("Cart screen is focused, refreshing cart data");
-      // You can add additional refresh logic here if needed
+      refreshCartData();
     }
   }, [isFocused]);
   
-  const updateQuantity = (productId, change) => {
+  // Function to refresh cart data from server
+  const refreshCartData = async () => {
+    try {
+      console.log("Explicitly fetching fresh cart data from server...");
+      const result = await fetchUserCart();
+      
+      if (result.success) {
+        console.log(`Loaded ${result.cart.length} cart items for current user`);
+        
+        // Update cart in global state
+        dispatch({
+          type: 'SET_CART',
+          payload: result.cart
+        });
+      } else {
+        console.error("Failed to refresh cart:", result.message);
+      }
+    } catch (error) {
+      console.error("Error refreshing cart:", error);
+    }
+  };
+  
+  const updateQuantity = async (productId, change) => {
     const cartItem = stateProducts.cart.find(item => item.product._id === productId);
     if (!cartItem) return;
     
@@ -49,10 +91,8 @@ const CartScreen = ({ navigation }) => {
     
     // When increasing quantity, check against available stock
     if (change > 0) {
-      // Get the current stock from the product
       const availableStock = cartItem.product.stockQuantity;
       
-      // Check if we're trying to add more than what's available
       if (cartItem.quantity >= availableStock) {
         Alert.alert(
           "Maximum Stock Reached",
@@ -63,21 +103,29 @@ const CartScreen = ({ navigation }) => {
       }
     }
     
-    // Continue with normal quantity update logic
+    // Update local state first for immediate feedback
+    dispatch({
+      type: 'UPDATE_CART_ITEM',
+      payload: {
+        productId,
+        newQuantity
+      }
+    });
+    
+    // Then sync with server
     if (newQuantity > 0) {
-      dispatch({
-        type: 'UPDATE_CART_ITEM',
-        payload: {
-          productId,
-          newQuantity
-        }
-      });
+      try {
+        await syncCartItem(productId, newQuantity);
+      } catch (error) {
+        console.error('Failed to sync cart with server:', error);
+        // Optional: Show error message
+      }
     } else {
       removeItem(productId);
     }
   };
   
-  const removeItem = (productId) => {
+  const removeItem = async (productId) => {
     Alert.alert(
       "Remove Item",
       "Are you sure you want to remove this item from your cart?",
@@ -85,11 +133,19 @@ const CartScreen = ({ navigation }) => {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Remove", 
-          onPress: () => {
+          onPress: async () => {
+            // Update local state
             dispatch({
               type: 'REMOVE_FROM_CART',
               payload: productId
             });
+            
+            // Sync with server
+            try {
+              await deleteCartItem(productId);
+            } catch (error) {
+              console.error('Failed to remove item from server cart:', error);
+            }
           },
           style: "destructive"
         }
@@ -107,8 +163,16 @@ const CartScreen = ({ navigation }) => {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Clear", 
-          onPress: () => {
+          onPress: async () => {
+            // Update local state
             dispatch({ type: 'CLEAR_CART' });
+            
+            // Sync with server
+            try {
+              await clearServerCart();
+            } catch (error) {
+              console.error('Failed to clear server cart:', error);
+            }
           },
           style: "destructive"
         }

@@ -61,6 +61,12 @@ export const ProductReducer = (state, action) => {
         )
       };
       
+    case 'SET_CART':
+      return {
+        ...state,
+        cart: action.payload
+      };
+      
     default:
       return state;
   }

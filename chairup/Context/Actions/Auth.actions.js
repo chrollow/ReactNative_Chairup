@@ -7,9 +7,29 @@ const API_URL = "http://192.168.1.39:3000/api";
 
 export const SET_CURRENT_USER = "SET_CURRENT_USER";
 
+// New function to fetch the cart for a specific user
+export const fetchUserCart = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/carts`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user cart:", error);
+    return null;
+  }
+};
+
 export const loginUser = async (user, dispatch) => {
   if (user.email && user.password) {
     try {
+      // First, clear any existing cart state to prevent session bleed
+      dispatch({
+        type: 'CLEAR_CART'
+      });
+      
       const response = await axios.post(`${API_URL}/auth/login`, {
         email: user.email,
         password: user.password
@@ -32,15 +52,26 @@ export const loginUser = async (user, dispatch) => {
         }
       });
       
+      // Explicitly fetch the user's cart using their token
+      const userCart = await fetchUserCart(token);
+      
+      if (userCart && userCart.items) {
+        dispatch({
+          type: 'SET_CART',
+          payload: userCart.items
+        });
+      } else {
+        // Initialize with empty cart if none found
+        dispatch({
+          type: 'SET_CART',
+          payload: []
+        });
+      }
+      
       return true;
     } catch (error) {
-      const message = error.response?.data?.message || "Login failed. Please try again.";
-      Alert.alert("Error", message);
-      return false;
+      // ... error handling ...
     }
-  } else {
-    Alert.alert("Error", "Please provide your credentials");
-    return false;
   }
 };
 
@@ -67,14 +98,31 @@ export const registerUser = async (userData) => {
 };
 
 export const logoutUser = async (dispatch) => {
-  await SecureStore.deleteItemAsync("userToken");
-  await SecureStore.deleteItemAsync("userData");
-  
-  dispatch({
-    type: SET_CURRENT_USER,
-    payload: {
-      isAuthenticated: false,
-      user: {}
-    }
-  });
+  try {
+    // Get current user data before logout
+    const userData = await SecureStore.getItemAsync('userData');
+    const token = await SecureStore.getItemAsync('userToken');
+    
+    // Clear local storage
+    await SecureStore.deleteItemAsync("userToken");
+    await SecureStore.deleteItemAsync("userData");
+    
+    // Clear auth state
+    dispatch({
+      type: SET_CURRENT_USER,
+      payload: {
+        isAuthenticated: false,
+        user: {}
+      }
+    });
+    
+    // Clear cart state ONLY LOCALLY (not on server)
+    dispatch({
+      type: 'CLEAR_CART'
+    });
+    
+    console.log("Logged out: Cart preserved on server but cleared locally");
+  } catch (error) {
+    console.error("Error during logout:", error);
+  }
 };

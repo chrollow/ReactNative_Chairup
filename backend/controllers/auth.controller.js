@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { OAuth2Client } = require('google-auth-library');
+const Cart = require('../models/Cart'); // Added Cart model
 
 // JWT secret key from environment variables
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -80,6 +81,13 @@ exports.login = async (req, res) => {
       expiresIn: 86400 // 24 hours
     });
 
+    // Find user's cart
+    const cart = await Cart.findOne({ user: user._id }).populate({
+      path: 'items.product',
+      select: 'name price image stockQuantity category'
+    });
+
+    // Send response with user info, token, and cart
     res.status(200).send({
       user: {
         id: user._id,
@@ -89,7 +97,8 @@ exports.login = async (req, res) => {
         profileImage: user.profile_image,
         isAdmin: user.is_admin
       },
-      token
+      token,
+      cart: cart ? cart.items : []
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
