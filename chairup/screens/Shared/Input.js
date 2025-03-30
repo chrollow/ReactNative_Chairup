@@ -10,12 +10,12 @@ const Input = (props) => {
         name={props.name}
         id={props.id}
         value={props.value}
-        autoCorrect={props.autoCorrect || false}
+        autoCorrect={props.autoCorrect}
         onChangeText={props.onChangeText}
         onFocus={props.onFocus}
-        secureTextEntry={props.secureTextEntry || false}
-        keyboardType={props.keyboardType || 'default'}
-        autoCapitalize={props.autoCapitalize || 'none'}
+        secureTextEntry={props.secureTextEntry}
+        keyboardType={props.keyboardType}
+        placeholderTextColor="#666"
       />
     </View>
   );
@@ -23,16 +23,25 @@ const Input = (props) => {
 
 const styles = StyleSheet.create({
   inputContainer: {
-    width: '80%',
-    marginBottom: 15,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    backgroundColor: '#f9f9f9',
+    width: '100%',
+    padding: 15,
+    fontSize: 16,
+    color: '#333333',
+    textAlign: 'center', // Center the input text
   },
 });
 

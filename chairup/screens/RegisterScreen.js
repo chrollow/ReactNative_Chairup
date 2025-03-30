@@ -161,81 +161,86 @@ const RegisterScreen = ({ navigation }) => {
       viewIsInsideTabBar={true}
       extraHeight={200}
       enableOnAndroid={true}
-      style={{ backgroundColor: '#fff' }}
+      style={{ backgroundColor: '#F8F6F3' }}
     >
-      <FormContainer title={"Register"}>
+      <FormContainer title={"Create Account"}>
         <View style={styles.imageContainer}>
           {mainImage ? (
             <Image source={{ uri: mainImage }} style={styles.image} />
           ) : (
-            <View style={[styles.image, { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{ color: '#888' }}>No Image</Text>
+            <View style={[styles.image, styles.placeholderImage]}>
+              <Ionicons name="person-outline" size={50} color="#666" />
             </View>
           )}
           <TouchableOpacity
             onPress={takePhoto}
             style={styles.imagePicker}
           >
-            <Ionicons name="camera" size={18} color="white" />
+            <Ionicons name="camera" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        <Input
-          placeholder="Email"
-          name="email"
-          id="email"
-          value={email}
-          onChangeText={(text) => setEmail(text.toLowerCase())}
-        />
-        <Input
-          placeholder="Name"
-          name="name"
-          id="name"
-          value={name}
-          onChangeText={(text) => setName(text)}
-        />
-        <Input
-          placeholder="Phone Number"
-          name="phone"
-          id="phone"
-          value={phone}
-          keyboardType="numeric"
-          onChangeText={(text) => setPhone(text)}
-        />
-        <Input
-          placeholder="Password"
-          name="password"
-          id="password"
-          value={password}
-          secureTextEntry={true}
-          onChangeText={(text) => setPassword(text)}
-        />
-        <Input
-          placeholder="Confirm Password"
-          name="confirmPassword"
-          id="confirmPassword"
-          value={confirmPassword}
-          secureTextEntry={true}
-          onChangeText={(text) => setConfirmPassword(text)}
-        />
+        <View style={styles.inputContainer}>
+          <Input
+            placeholder="Email"
+            name="email"
+            id="email"
+            value={email}
+            onChangeText={(text) => setEmail(text.toLowerCase())}
+            keyboardType="email-address"
+            autoCorrect={false}
+          />
+          <Input
+            placeholder="Name"
+            name="name"
+            id="name"
+            value={name}
+            onChangeText={(text) => setName(text)}
+            autoCorrect={false}
+          />
+          <Input
+            placeholder="Phone Number"
+            name="phone"
+            id="phone"
+            value={phone}
+            keyboardType="numeric"
+            onChangeText={(text) => setPhone(text)}
+          />
+          <Input
+            placeholder="Password"
+            name="password"
+            id="password"
+            value={password}
+            secureTextEntry={true}
+            onChangeText={(text) => setPassword(text)}
+            autoCorrect={false}
+          />
+          <Input
+            placeholder="Confirm Password"
+            name="confirmPassword"
+            id="confirmPassword"
+            value={confirmPassword}
+            secureTextEntry={true}
+            onChangeText={(text) => setConfirmPassword(text)}
+            autoCorrect={false}
+          />
+        </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Register"
-            onPress={handleRegister}
-            color="#4a6da7"
-          />
-        </View>
+        <TouchableOpacity 
+          style={styles.registerButton}
+          onPress={handleRegister}
+        >
+          <Text style={styles.registerButtonText}>Create Account</Text>
+        </TouchableOpacity>
         
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Back to Login"
-            onPress={() => navigation.navigate("Login")}
-            color="#888"
-          />
-        </View>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.navigate("Login")}
+        >
+          <Text style={styles.backButtonText}>Back to Login</Text>
+        </TouchableOpacity>
       </FormContainer>
     </KeyboardAwareScrollView>
   );
@@ -243,38 +248,86 @@ const RegisterScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   imageContainer: {
-    width: 200,
-    height: 200,
-    borderStyle: "solid",
-    borderWidth: 8,
-    padding: 0,
-    justifyContent: "center",
-    borderRadius: 100,
-    borderColor: "#E0E0E0",
-    elevation: 10,
-    marginBottom: 20,
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+    marginVertical: 20,
+    position: 'relative',
   },
   image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 100
+    width: '100%',
+    height: '100%',
+    borderRadius: 75,
+    borderWidth: 3,
+    borderColor: '#E6D5B8',
+  },
+  placeholderImage: {
+    backgroundColor: '#F8F6F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E6D5B8',
+    borderStyle: 'dashed',
   },
   imagePicker: {
-    position: "absolute",
-    right: 5,
-    bottom: 5,
-    backgroundColor: "grey",
-    padding: 8,
-    borderRadius: 100,
-    elevation: 20
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#333333',
+    padding: 12,
+    borderRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  buttonContainer: {
-    width: "80%",
-    marginVertical: 10,
+  inputContainer: {
+    width: '90%', // Changed from 100% to 90%
+    alignSelf: 'center', // Added to center the container
+    paddingHorizontal: 0, // Changed from 20 to 0 since we're using width
+    gap: 12, // Slightly increased gap for better spacing
+  },
+  registerButton: {
+    backgroundColor: '#333333',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  registerButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  backButton: {
+    backgroundColor: '#E6D5B8',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+  backButtonText: {
+    color: '#333333',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
   },
   error: {
-    color: 'red',
-    marginBottom: 10,
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginTop: 10,
+    fontSize: 14,
   }
 });
 

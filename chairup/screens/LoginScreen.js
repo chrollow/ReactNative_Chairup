@@ -8,7 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  TouchableOpacity
 } from 'react-native';
 import FormContainer from './Shared/FormContainer';
 import Input from './Shared/Input';
@@ -80,17 +81,19 @@ const LoginScreen = ({ navigation }) => {
         <Image 
           source={require('../assets/chair-logo.png')} 
           style={styles.logo}
+          tintColor="#333333"
         />
         <Text style={styles.title}>ChairUp</Text>
         <Text style={styles.subtitle}>Premium Chair Marketplace</Text>
       </View>
-      <FormContainer>
+      <FormContainer style={styles.formContainer}>
         <Input
           placeholder="Email"
           name="email"
           id="email"
           value={email}
           onChangeText={(text) => setEmail(text.toLowerCase())}
+          containerStyle={styles.inputContainer}
         />
         <Input
           placeholder="Password"
@@ -99,18 +102,20 @@ const LoginScreen = ({ navigation }) => {
           secureTextEntry={true}
           value={password}
           onChangeText={(text) => setPassword(text)}
+          containerStyle={styles.inputContainer}
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         
         <View style={styles.buttonGroup}>
           {isLoading ? (
-            <ActivityIndicator size="small" color="#4a6da7" />
+            <ActivityIndicator size="small" color="#333333" />
           ) : (
-            <Button 
-              title="Login" 
-              onPress={() => handleSubmit()} 
-              color="#4a6da7" 
-            />
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.loginButtonText}>Login</Text>
+            </TouchableOpacity>
           )}
         </View>
         
@@ -124,12 +129,13 @@ const LoginScreen = ({ navigation }) => {
         <FacebookLogin onLoginSuccess={handleLoginSuccess} />
         
         <View style={styles.registerContainer}>
-          <Text style={styles.middleText}>Don't have an account yet? </Text>
-          <Button 
-            title="Register" 
+          <Text style={styles.middleText}>Don't have an account yet?</Text>
+          <TouchableOpacity 
             onPress={() => navigation.navigate("Register")}
-            color="#4a6da7" 
-          />
+            style={styles.registerButton}
+          >
+            <Text style={styles.registerButtonText}>Register</Text>
+          </TouchableOpacity>
         </View>
       </FormContainer>
     </KeyboardAvoidingView>
@@ -139,61 +145,106 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8F6F3',
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 10,
+    marginTop: 60,
+    marginBottom: 30,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
     resizeMode: 'contain',
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#4a6da7',
-    marginTop: 10,
+    color: '#333333',
+    marginTop: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginTop: 5,
+    color: '#666666',
+    marginTop: 8,
+  },
+  formContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 30,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  inputContainer: {
+    backgroundColor: '#F8F6F3',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
   buttonGroup: {
-    width: '80%',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  middleText: {
-    marginRight: 10,
-    color: '#333',
-  },
-  registerContainer: {
-    flexDirection: 'row',
+    width: '100%',
     alignItems: 'center',
     marginTop: 20,
   },
-  error: {
-    color: 'red',
-    marginBottom: 10,
+  loginButton: {
+    backgroundColor: '#333333',
+    width: '100%',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 2,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '80%',
-    marginVertical: 15,
+    width: '100%',
+    marginVertical: 24,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ddd',
+    backgroundColor: '#E6D5B8',
   },
   orText: {
-    marginHorizontal: 10,
-    color: '#666',
+    marginHorizontal: 16,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  middleText: {
+    color: '#666666',
+    marginRight: 8,
+  },
+  registerButton: {
+    backgroundColor: '#E6D5B8',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  registerButtonText: {
+    color: '#333333',
+    fontWeight: '600',
+  },
+  error: {
+    color: '#ff6b6b',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
 
