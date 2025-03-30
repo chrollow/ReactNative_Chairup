@@ -8,11 +8,14 @@ import {
   Image, 
   TouchableOpacity,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthContext } from '../Context/Store/AuthGlobal';
 import { logoutUser } from '../Context/Actions/Auth.actions';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import SimpleDrawer from '../components/SimpleDrawer';
 
 // Sample chair data
 const chairsData = [
@@ -46,10 +49,15 @@ const chairsData = [
   },
 ];
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const { dispatch } = useContext(AuthContext);
-  
+  const [showDrawer, setShowDrawer] = useState(false);
+
+  const toggleDrawer = () => {
+    setShowDrawer(!showDrawer);
+  };
+
   useEffect(() => {
     const getUserData = async () => {
       try {
@@ -95,17 +103,24 @@ const HomeScreen = () => {
       <StatusBar barStyle="dark-content" />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ChairUp</Text>
-        
-        {userData?.profileImage && (
-          <TouchableOpacity style={styles.profileContainer}>
-            <Image 
-              source={{ uri: userData.profileImage }} 
-              style={styles.profileImage} 
-            />
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={toggleDrawer}>
+            <Icon name="menu" size={28} color="#fff" />
           </TouchableOpacity>
-        )}
+        </View>
+        <View style={styles.headerRight}>
+          <Image
+            source={require('../assets/chair-logo.png')}
+            style={styles.headerLogo}
+          />
+        </View>
       </View>
+
+      <SimpleDrawer
+        isVisible={showDrawer}
+        onClose={toggleDrawer}
+        navigation={navigation}
+      />
       
       <View style={styles.welcomeContainer}>
         <Text style={styles.welcomeText}>
@@ -143,7 +158,7 @@ const HomeScreen = () => {
       </View>
       
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
+        <Icon name="logout" size={24} color="#fff" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -152,131 +167,165 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F8F6F3',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingVertical: 15,
+    backgroundColor: '#333333',
+    elevation: 4,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#4a6da7',
+  headerLeft: {
+    width: '50%',
+    alignItems: 'flex-start',
   },
-  profileContainer: {
-    width: 40,
+  headerRight: {
+    width: '50%',
+    alignItems: 'flex-end',
+  },
+  headerLogo: {
+    width: 100,
     height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
+    resizeMode: 'contain',
   },
   welcomeContainer: {
-    padding: 20,
+    padding: 24,
     backgroundColor: '#fff',
-    marginBottom: 10,
+    borderRadius: 20,
+    margin: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   welcomeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 8,
   },
   subText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 5,
+    fontSize: 16,
+    color: '#666666',
+    letterSpacing: 0.5,
   },
   categoryContainer: {
-    padding: 20,
+    padding: 16,
     backgroundColor: '#fff',
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   categories: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
   categoryItem: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    backgroundColor: '#F8F6F3',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    width: '23%', // This ensures equal width with proper spacing
   },
   categoryText: {
-    color: '#555',
+    color: '#333333',
+    fontWeight: '600',
+    fontSize: 13,
+    textAlign: 'center',
   },
   productContainer: {
     flex: 1,
-    padding: 20,
+    padding: 16,
     backgroundColor: '#fff',
-  },
-  chairItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    overflow: 'hidden',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 20,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
+  },
+  chairItem: {
+    backgroundColor: '#F8F6F3',  // Changed to match category background
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
   },
   chairImage: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
   },
   chairInfo: {
-    flex: 1,
-    padding: 10,
+    padding: 16,
   },
   chairName: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 8,
   },
   chairPrice: {
-    color: '#4a6da7',
-    fontWeight: 'bold',
-    marginVertical: 5,
+    fontSize: 18,
+    color: '#D7A86E',
+    fontWeight: '700',
+    marginBottom: 8,
   },
   chairDescription: {
-    fontSize: 12,
-    color: '#777',
-    marginBottom: 5,
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 16,
+    lineHeight: 20,
   },
   addToCartButton: {
-    backgroundColor: '#4a6da7',
-    padding: 5,
-    borderRadius: 5,
+    backgroundColor: '#333333',
+    padding: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 5,
   },
   addToCartText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+    fontWeight: '600',
+    fontSize: 16,
   },
   logoutButton: {
-    backgroundColor: '#ff6b6b',
-    padding: 10,
-    margin: 20,
-    borderRadius: 5,
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#333333',
+    padding: 12,
+    borderRadius: 30,
+    width: 50,
+    height: 50,
     alignItems: 'center',
-  },
-  logoutText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
 

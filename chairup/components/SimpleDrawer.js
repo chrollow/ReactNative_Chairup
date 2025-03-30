@@ -7,7 +7,8 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../Context/Store/AuthGlobal';
@@ -18,6 +19,23 @@ const { height } = Dimensions.get('window');
 const SimpleDrawer = ({ isVisible, onClose, navigation }) => {
   const { stateUser, dispatch } = useContext(AuthContext);
   const user = stateUser.user || {};
+  const slideAnim = React.useRef(new Animated.Value(100)).current;  // Add this
+
+  React.useEffect(() => {
+    if (isVisible) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 100,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isVisible]);
 
   const handleLogout = () => {
     logoutUser(dispatch);
@@ -33,60 +51,73 @@ const SimpleDrawer = ({ isVisible, onClose, navigation }) => {
     <Modal
       visible={isVisible}
       transparent={true}
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.closeArea} onPress={onClose} />
-        <SafeAreaView style={styles.drawer}>
-          <View style={styles.drawerHeader}>
-            <View style={styles.profileIcon}>
-              <Ionicons name="person" size={40} color="#fff" />
+        <Animated.View
+          style={[
+            styles.drawer,
+            {
+              transform: [
+                {
+                  translateX: slideAnim.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: [0, 300],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <View style={styles.drawerHeader}>
+              <View style={styles.profileIcon}>
+                <Ionicons name="person" size={40} color="#F8F6F3" />
+              </View>
+              <Text style={styles.headerName}>{user.name || 'Guest'}</Text>
+              <Text style={styles.headerEmail}>{user.email || ''}</Text>
             </View>
-            <Text style={styles.headerName}>{user.name || 'Guest'}</Text>
-            <Text style={styles.headerEmail}>{user.email || ''}</Text>
-          </View>
 
-          <ScrollView style={styles.menuItems}>
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => navigateTo('Main')}
-            >
-              <Ionicons name="home-outline" size={24} color="#333" />
-              <Text style={styles.menuText}>Home</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => navigateTo('Products')}
-            >
-              <Ionicons name="grid-outline" size={24} color="#333" />
-              <Text style={styles.menuText}>Products</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => navigateTo('Profile')}
-            >
-              <Ionicons name="person-outline" size={24} color="#333" />
-              <Text style={styles.menuText}>Profile</Text>
-            </TouchableOpacity>
+            <ScrollView style={styles.menuItems}>
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => navigateTo('Main')}
+              >
+                <Ionicons name="home-outline" size={24} color="#333333" />
+                <Text style={styles.menuText}>Home</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => navigateTo('Products')}
+              >
+                <Ionicons name="grid-outline" size={24} color="#333333" />
+                <Text style={styles.menuText}>Products</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => navigateTo('Profile')}
+              >
+                <Ionicons name="person-outline" size={24} color="#333333" />
+                <Text style={styles.menuText}>Profile</Text>
+              </TouchableOpacity>
+            </ScrollView>
 
-            <View style={styles.divider} />
-            
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={handleLogout}
-            >
-              <Ionicons name="log-out-outline" size={24} color="#ff6b6b" />
-              <Text style={[styles.menuText, styles.logoutText]}>Logout</Text>
-            </TouchableOpacity>
-          </ScrollView>
-          
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>ChairUp v1.0.0</Text>
+            <View style={styles.footer}>
+              <TouchableOpacity 
+                style={[styles.menuItem, styles.logoutButton]} 
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={24} color="#333333" />
+                <Text style={styles.menuText}>Logout</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerText}>ChairUp v1.0.0</Text>
+            </View>
           </View>
-        </SafeAreaView>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -99,69 +130,83 @@ const styles = StyleSheet.create({
   },
   closeArea: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(51, 51, 51, 0.5)', // Using #333333 with opacity
   },
   drawer: {
-    width: '70%',
-    backgroundColor: '#fff',
+    position: 'absolute',
+    right: 0,  // Add this to position from right side
+    width: '75%',
+    backgroundColor: '#F8F6F3',
     height: height,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },  // Changed to negative for left side shadow
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
   },
   drawerHeader: {
-    padding: 20,
-    backgroundColor: '#4a6da7',
+    padding: 24,
+    backgroundColor: '#333333',
     alignItems: 'center',
   },
   profileIcon: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: '#E6D5B8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
+    elevation: 2,
   },
   headerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
+    color: '#F8F6F3',
   },
   headerEmail: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#E6D5B8',
   },
   menuItems: {
     flex: 1,
+    paddingTop: 8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginHorizontal: 8,
+    marginVertical: 4,
+    borderRadius: 12,
   },
   menuText: {
     fontSize: 16,
-    marginLeft: 15,
-    color: '#333',
+    marginLeft: 16,
+    color: '#333333',
+    fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 15,
-    marginHorizontal: 20,
-  },
-  logoutText: {
-    color: '#ff6b6b',
+    backgroundColor: '#E6D5B8',
+    marginVertical: 16,
+    marginHorizontal: 24,
   },
   footer: {
-    padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-    alignItems: 'center',
+    borderTopColor: '#E6D5B8',
+    paddingVertical: 16,
   },
   footerText: {
     fontSize: 12,
-    color: '#888',
+    color: '#666666',
+    textAlign: 'center',
+  },
+  logoutButton: {
+    marginBottom: 16,
   },
 });
 

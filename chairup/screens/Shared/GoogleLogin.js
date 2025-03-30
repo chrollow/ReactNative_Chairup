@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
 
-const API_URL = "http://192.168.1.39:3000/api";
+const API_URL = "http://192.168.100.11:3000/api";
 
 // Register for WebBrowser redirect
 WebBrowser.maybeCompleteAuthSession();

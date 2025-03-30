@@ -23,8 +23,8 @@ import axios from 'axios';
 import { useFocusEffect } from '@react-navigation/native';
 import API from '../../utils/api';
 
-const API_URL = "http://192.168.1.39:3000/api";
-const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
+const API_URL = "http://192.168.100.11:3000/api";
+const BASE_URL = "http://192.168.100.11:3000"; // Base URL without /api
 
 const ProductsScreen = ({ navigation }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
@@ -260,10 +260,16 @@ const ProductsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleDrawer}>
-          <Ionicons name="menu-outline" size={24} color="#4a6da7" />
+          <Ionicons name="menu-outline" size={24} color="#fff" />
         </TouchableOpacity>
+        
+        <Image
+          source={require('../../assets/chair-logo.png')}
+          style={styles.headerLogo}
+        />
+        
         <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
-          <Ionicons name="cart-outline" size={24} color="#4a6da7" />
+          <Ionicons name="cart-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
       
@@ -272,7 +278,7 @@ const ProductsScreen = ({ navigation }) => {
           <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search chairs..."
+            placeholder="Search Chairs..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
