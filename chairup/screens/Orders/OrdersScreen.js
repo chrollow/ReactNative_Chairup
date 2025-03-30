@@ -115,7 +115,7 @@ const OrdersScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8F6F3',
   },
   centered: {
     flex: 1,
@@ -123,19 +123,21 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   ordersList: {
-    padding: 15,
+    padding: 16,
     paddingBottom: 30
   },
   orderItem: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2
+    shadowRadius: 4,
   },
   orderHeader: {
     flexDirection: 'row',
@@ -145,72 +147,86 @@ const styles = StyleSheet.create({
   },
   orderId: {
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: '600',
+    color: '#333333'
   },
   orderDate: {
     fontSize: 14,
-    color: '#666',
-    marginTop: 2
+    color: '#666666',
+    marginTop: 4
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#E6D5B8'
   },
   statusText: {
-    color: '#fff',
+    color: '#333333',
     fontSize: 12,
-    fontWeight: 'bold'
+    fontWeight: '600'
   },
   orderDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 10,
-    paddingBottom: 12,
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderColor: '#E6D5B8'
   },
   itemCount: {
     fontSize: 14,
-    color: '#666'
+    color: '#666666'
   },
   totalPrice: {
-    fontSize: 16,
-    fontWeight: 'bold'
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333333'
   },
   viewDetailsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingTop: 10
+    paddingTop: 12
   },
   viewDetailsText: {
-    color: '#4a6da7',
-    marginRight: 5,
-    fontSize: 14
+    color: '#333333',
+    marginRight: 6,
+    fontSize: 14,
+    fontWeight: '600'
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50
+    paddingVertical: 60,
+    backgroundColor: '#fff',
+    margin: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6D5B8'
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
-    marginVertical: 10
+    fontSize: 18,
+    color: '#333333',
+    marginVertical: 16,
+    fontWeight: '500'
   },
   shopButton: {
-    backgroundColor: '#4a6da7',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 10
+    backgroundColor: '#333333',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   shopButtonText: {
     color: '#fff',
-    fontWeight: 'bold'
+    fontSize: 16,
+    fontWeight: '600'
   }
 });
 
