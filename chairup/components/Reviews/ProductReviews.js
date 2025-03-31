@@ -1,4 +1,4 @@
-const BASE_URL = "http://192.168.100.11:3000"; // Use your server IP here
+const BASE_URL = "http://192.168.1.36:3000"; // Use your server IP here
 
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { 
@@ -76,17 +76,25 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
   // Check if user has purchased this product
   const checkIfProductPurchased = async (productId) => {
     try {
-      const userId = await SecureStore.getItemAsync('userId');
+      // Use the userId from state instead of fetching from SecureStore again
       if (!userId) return false;
+      
+      // Check if orders exists and is an array before using it
+      if (!orders || !Array.isArray(orders)) {
+        console.log("Orders not available:", orders);
+        return false;
+      }
       
       // Check if this user has any completed orders with this product
       const hasOrdered = orders.some(order => 
         order.status === 'delivered' && 
+        order.orderItems && Array.isArray(order.orderItems) &&
         order.orderItems.some(item => 
           item.product && item.product._id === productId
         )
       );
       
+      console.log("Has ordered this product:", hasOrdered);
       setPurchaseVerified(hasOrdered);
       return hasOrdered;
     } catch (error) {
@@ -167,7 +175,27 @@ const ProductReviews = forwardRef(({ productId }, ref) => {
           Alert.alert('Error', result.payload || 'Failed to update review. Please try again.');
         }
       } else {
-        // Rest of the function for creating a new review remains the same
+        // Create new review
+        console.log(`Creating new review for product ${productId}`);
+        
+        const result = await dispatch(createReview({
+          productId,
+          reviewData: formData
+        }));
+        
+        if (!result.error) {
+          setShowReviewModal(false);
+          setRating(5);
+          setComment('');
+          setReviewImage(null);
+          
+          // Force refresh reviews
+          dispatch(fetchProductReviews(productId));
+          
+          Alert.alert('Success', 'Your review has been submitted');
+        } else {
+          Alert.alert('Error', result.payload || 'Failed to submit review. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Error submitting review:', error);
