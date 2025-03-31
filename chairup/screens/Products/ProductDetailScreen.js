@@ -16,8 +16,8 @@ import ProductReviews from '../../components/Reviews/ProductReviews';
 import { syncCartItem } from '../../Context/Actions/Product.actions';
 import { useSelector } from 'react-redux';
 
-const API_URL = "http://192.168.1.36:3000/api";
-const BASE_URL = "http://192.168.1.36:3000"; // Base URL without /api
+const API_URL = "http://192.168.100.11:3000/api";
+const BASE_URL = "http://192.168.100.11:3000"; // Base URL without /api
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { productId } = route.params;
@@ -300,126 +300,155 @@ const ProductDetailScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#F8F6F3'
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: '#F8F6F3'
   },
   productImage: {
     width: '100%',
-    height: 300,
-    resizeMode: 'cover'
+    height: 350,
+    resizeMode: 'cover',
+    backgroundColor: '#F8F6F3'
   },
   infoContainer: {
-    padding: 15
+    padding: 20,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   productName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 12
   },
   productPrice: {
-    fontSize: 22,
-    color: '#e91e63',
-    marginBottom: 10
+    fontSize: 24,
+    color: '#333333',
+    fontWeight: '700',
+    marginBottom: 12
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15
+    marginBottom: 16
   },
   ratingText: {
-    marginLeft: 5,
-    fontSize: 16
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666666'
   },
   categoryText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 6
+    fontSize: 15,
+    color: '#666666',
+    marginBottom: 8
   },
   stockStatusText: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 15
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 16
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 24
   },
   quantityLabel: {
-    fontSize: 16,
-    marginRight: 10
+    fontSize: 15,
+    color: '#333333',
+    marginRight: 12
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8F6F3',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5
+    borderColor: '#E6D5B8'
   },
   quantityButton: {
-    padding: 10,
-    width: 40,
+    padding: 12,
+    width: 44,
     alignItems: 'center',
-    backgroundColor: '#f9f9f9'
+    justifyContent: 'center',
   },
   disabledButton: {
-    backgroundColor: '#f0f0f0',
+    opacity: 0.5,
   },
   quantityButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2196f3'
+    fontWeight: '600',
+    color: '#333333'
   },
   disabledButtonText: {
-    color: '#aaa'
+    color: '#666666'
   },
   quantityValue: {
-    paddingHorizontal: 15,
-    fontSize: 16
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333'
   },
   addToCartButton: {
-    backgroundColor: '#2196f3',
-    padding: 15,
-    borderRadius: 5,
+    backgroundColor: '#333333',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   disabledAddToCartButton: {
-    backgroundColor: '#cccccc'
+    backgroundColor: '#E6D5B8',
+    opacity: 0.7
   },
   addToCartButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: '600'
   },
   descriptionContainer: {
-    marginTop: 10
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#F8F6F3',
+    borderRadius: 12,
   },
   descriptionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 12
   },
   descriptionText: {
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 24,
-    color: '#333'
+    color: '#666666'
   },
   reviewsHeader: {
-    marginTop: 20,
-    paddingTop: 15,
+    marginTop: 24,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingHorizontal: 15
+    borderTopColor: '#E6D5B8',
+    paddingHorizontal: 20
   },
   reviewsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 12
   }
 });
 

@@ -149,30 +149,32 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 30,
+    marginTop: '10%', // Changed from fixed 60 to percentage
+    marginBottom: '5%', // Changed from fixed 30 to percentage
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 80, // Reduced from 120
+    height: 80, // Reduced from 120
     resizeMode: 'contain',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28, // Reduced from 32
     fontWeight: 'bold',
     color: '#333333',
-    marginTop: 16,
+    marginTop: 8, // Reduced from 16
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     color: '#666666',
-    marginTop: 8,
+    marginTop: 4, // Reduced from 8
   },
   formContainer: {
+    flex: 1, // Added flex: 1
     backgroundColor: '#fff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    paddingTop: 30,
+    paddingTop: 20, // Reduced from 30
+    paddingHorizontal: 20,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -184,18 +186,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E6D5B8',
-    marginBottom: 16,
+    marginBottom: 12, // Reduced from 16
     paddingHorizontal: 16,
   },
   buttonGroup: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 16, // Reduced from 20
   },
   loginButton: {
     backgroundColor: '#333333',
     width: '100%',
-    padding: 16,
+    padding: 14, // Reduced from 16
     borderRadius: 12,
     alignItems: 'center',
     elevation: 2,
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginVertical: 24,
+    marginVertical: 16, // Reduced from 24
   },
   divider: {
     flex: 1,
@@ -225,26 +227,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 16, // Reduced from 24
+    marginBottom: 20, // Added to ensure space at bottom
   },
   middleText: {
     color: '#666666',
     marginRight: 8,
+    fontSize: 14, // Added to reduce text size
   },
   registerButton: {
     backgroundColor: '#E6D5B8',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 6, // Reduced from 8
+    paddingHorizontal: 12, // Reduced from 16
     borderRadius: 8,
   },
   registerButtonText: {
     color: '#333333',
     fontWeight: '600',
+    fontSize: 14, // Added to reduce text size
   },
   error: {
     color: '#ff6b6b',
-    marginBottom: 16,
+    marginBottom: 12, // Reduced from 16
     textAlign: 'center',
+    fontSize: 13, // Added to reduce text size
   },
 });
 

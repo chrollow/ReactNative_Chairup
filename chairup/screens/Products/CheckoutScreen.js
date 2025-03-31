@@ -18,7 +18,7 @@ import * as SecureStore from 'expo-secure-store';
 import { clearCart } from '../../redux/slices/cartSlice';
 import { clearServerCart } from '../../Context/Actions/Product.actions';
 
-const API_URL = "http://192.168.1.36:3000/api"; // Update with your server IP
+const API_URL = "http://192.168.100.11:3000/api"; // Update with your server IP
 
 const CheckoutScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -350,111 +350,134 @@ const CheckoutScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#F8F6F3'
   },
   section: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    marginHorizontal: 15,
-    marginTop: 15
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 16,
+    marginTop: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 16
   },
   formGroup: {
-    marginBottom: 15
+    marginBottom: 16
   },
   formRow: {
     flexDirection: 'row',
-    marginBottom: 15
+    marginBottom: 16,
+    gap: 12
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 5,
-    color: '#555'
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333333'
   },
   input: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#F8F6F3',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16
+    borderColor: '#E6D5B8',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    color: '#333333'
   },
   paymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    marginBottom: 10
+    borderColor: '#E6D5B8',
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: '#F8F6F3'
   },
   selectedPayment: {
-    borderColor: '#4a6da7',
-    backgroundColor: 'rgba(74, 109, 167, 0.1)'
+    borderColor: '#333333',
+    backgroundColor: '#fff'
   },
   paymentOptionText: {
-    marginLeft: 10,
+    marginLeft: 12,
     fontSize: 16,
-    color: '#555'
+    color: '#666666'
   },
   selectedPaymentText: {
-    fontWeight: 'bold',
-    color: '#4a6da7'
+    fontWeight: '600',
+    color: '#333333'
   },
   orderSummaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8
+    paddingVertical: 10
   },
   orderSummaryLabel: {
     fontSize: 15,
-    color: '#555'
+    color: '#666666'
   },
   orderSummaryValue: {
     fontSize: 15,
-    fontWeight: '500'
+    fontWeight: '600',
+    color: '#333333'
   },
   divider: {
     height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 10
+    backgroundColor: '#E6D5B8',
+    marginVertical: 12
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold'
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333333'
   },
   totalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#e91e63'
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333333'
   },
   footer: {
     backgroundColor: '#fff',
-    paddingVertical: 15,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: '#eee'
+    borderTopColor: '#E6D5B8',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   placeOrderButton: {
-    backgroundColor: '#4a6da7',
+    backgroundColor: '#333333',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderRadius: 8
+    paddingVertical: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   placeOrderText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 5
+    fontWeight: '600',
+    marginRight: 8
   }
 });
 

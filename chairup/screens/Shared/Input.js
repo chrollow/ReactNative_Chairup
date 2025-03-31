@@ -12,10 +12,10 @@ const Input = (props) => {
         value={props.value}
         autoCorrect={props.autoCorrect}
         onChangeText={props.onChangeText}
-        onFocus={props.onFocus}
         secureTextEntry={props.secureTextEntry}
         keyboardType={props.keyboardType}
-        placeholderTextColor="#666"
+        placeholderTextColor="#666666" 
+        autoCapitalize="none" 
       />
     </View>
   );
