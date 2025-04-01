@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
@@ -7,82 +7,112 @@ const AdminDashboardScreen = () => {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Admin Dashboard</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Admin Dashboard</Text>
+      </View>
 
-      <TouchableOpacity 
-        style={styles.menuItem}
-        onPress={() => navigation.navigate('AdminProducts')}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: '#4caf50' }]}>
-          <Ionicons name="cube-outline" size={24} color="#fff" />
-        </View>
-        <View style={styles.menuContent}>
-          <Text style={styles.menuTitle}>Product Management</Text>
-          <Text style={styles.menuDescription}>Add, edit or delete products</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={24} color="#ccc" />
-      </TouchableOpacity>
+      <View style={styles.content}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('AdminProducts')}
+        >
+          <View style={[styles.iconContainer]}>
+            <Ionicons name="cube-outline" size={24} color="#fff" />
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={styles.menuTitle}>Product Management</Text>
+            <Text style={styles.menuDescription}>Add, edit or delete products</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#E6D5B8" />
+        </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.menuItem}
-        onPress={() => navigation.navigate('AdminOrders')}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: '#2196f3' }]}>
-          <Ionicons name="receipt-outline" size={24} color="#fff" />
-        </View>
-        <View style={styles.menuContent}>
-          <Text style={styles.menuTitle}>Order Management</Text>
-          <Text style={styles.menuDescription}>View and update order status</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={24} color="#ccc" />
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('AdminOrders')}
+        >
+          <View style={[styles.iconContainer]}>
+            <Ionicons name="receipt-outline" size={24} color="#fff" />
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={styles.menuTitle}>Order Management</Text>
+            <Text style={styles.menuDescription}>View and update order status</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#E6D5B8" />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F6F3',
+  },
+  header: {
+    backgroundColor: '#333333',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    paddingTop: 40,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  content: {
+    padding: 20,
+    paddingTop: 30,
   },
   menuItem: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
   },
   iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
+    backgroundColor: '#333333',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   menuContent: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
   },
   menuDescription: {
-    color: '#666',
-    marginTop: 4,
+    color: '#666666',
+    fontSize: 14,
   },
 });
 
