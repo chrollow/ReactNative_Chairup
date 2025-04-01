@@ -248,34 +248,34 @@ const RegisterScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   imageContainer: {
-    width: 150,
-    height: 150,
+    width: 100, // Reduced from 150
+    height: 100, // Reduced from 150
     alignSelf: 'center',
-    marginVertical: 20,
+    marginVertical: 10, // Reduced from 20
     position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 75,
-    borderWidth: 3,
+    borderRadius: 50, // Reduced from 75
+    borderWidth: 2, // Reduced from 3
     borderColor: '#E6D5B8',
   },
   placeholderImage: {
     backgroundColor: '#F8F6F3',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1, // Reduced from 2
     borderColor: '#E6D5B8',
     borderStyle: 'dashed',
   },
   imagePicker: {
     position: 'absolute',
-    right: 0,
-    bottom: 0,
+    right: -5,
+    bottom: -5,
     backgroundColor: '#333333',
-    padding: 12,
-    borderRadius: 20,
+    padding: 8, // Reduced from 12
+    borderRadius: 16, // Reduced from 20
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -283,19 +283,24 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   inputContainer: {
-    width: '90%', // Changed from 100% to 90%
-    alignSelf: 'center', // Added to center the container
-    paddingHorizontal: 0, // Changed from 20 to 0 since we're using width
-    gap: 12, // Slightly increased gap for better spacing
+    width: '90%',
+    alignSelf: 'center',
+    paddingHorizontal: 0,
+    gap: 8, // Reduced from 12
+  },
+  input: {
+    height: 40, // Added fixed height
+    paddingVertical: 8, // Reduced padding
+    fontSize: 14, // Reduced from 16
   },
   registerButton: {
     backgroundColor: '#333333',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingVertical: 12, // Reduced from 15
+    paddingHorizontal: 20, // Reduced from 30
     borderRadius: 12,
     width: '90%',
     alignSelf: 'center',
-    marginTop: 20,
+    marginTop: 12, // Reduced from 20
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -305,29 +310,31 @@ const styles = StyleSheet.create({
   registerButtonText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     fontWeight: '600',
   },
   backButton: {
     backgroundColor: '#E6D5B8',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingVertical: 12, // Reduced from 15
+    paddingHorizontal: 20, // Reduced from 30
     borderRadius: 12,
     width: '90%',
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: 8, // Reduced from 10
+    marginBottom: 10, // Added to ensure space at bottom
   },
   backButtonText: {
     color: '#333333',
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16
     fontWeight: '600',
   },
   error: {
     color: '#ff6b6b',
     textAlign: 'center',
-    marginTop: 10,
-    fontSize: 14,
+    marginTop: 6, // Reduced from 10
+    marginBottom: 6, // Added
+    fontSize: 12, // Reduced from 14
   }
 });
 
