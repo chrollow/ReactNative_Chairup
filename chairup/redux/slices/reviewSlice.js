@@ -3,11 +3,7 @@ import { getProductReviews, getUserReviews } from '../../Context/Actions/Product
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-<<<<<<< HEAD
 const BASE_URL = 'http://192.168.1.36:3000';
-=======
-const BASE_URL = 'http://192.168.100.11:3000';
->>>>>>> feature/fix-ui
 
 export const createReview = createAsyncThunk(
   'reviews/createReview',
