@@ -1,17 +1,50 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { addReview, updateReview, getProductReviews, getUserReviews } from '../../Context/Actions/Product.actions';
+import { getProductReviews, getUserReviews } from '../../Context/Actions/Product.actions';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+
+const BASE_URL = 'http://192.168.1.39:3000';
 
 export const createReview = createAsyncThunk(
-  'reviews/create',
-  async ({ productId, reviewData }, { rejectWithValue }) => {
+  'reviews/createReview',
+  async ({productId, reviewData}, {rejectWithValue}) => {
     try {
-      const result = await addReview(productId, reviewData);
-      if (!result.success) {
-        return rejectWithValue(result.message);
+      // Get auth token
+      const token = await SecureStore.getItemAsync('userToken');
+      
+      if (!token) {
+        return rejectWithValue('Authentication required. Please log in again.');
       }
-      return result.review;
+      
+      // Set timeout to 10 seconds to avoid long waiting
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}` // Add the token to headers
+        },
+        timeout: 10000 // 10 seconds timeout
+      };
+      
+      console.log('Sending review data to server:', {
+        url: `${BASE_URL}/api/products/${productId}/reviews`,
+        data: reviewData
+      });
+      
+      const response = await axios.post(
+        `${BASE_URL}/api/products/${productId}/reviews`, 
+        reviewData,
+        config
+      );
+      
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      console.error('Review creation error details:', error.message);
+      // If there's a response with an error message
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+      // Network errors or other issues
+      return rejectWithValue('Network error - please check your connection and try again');
     }
   }
 );
@@ -20,13 +53,40 @@ export const editReview = createAsyncThunk(
   'reviews/update',
   async ({ productId, reviewId, reviewData }, { rejectWithValue }) => {
     try {
-      const result = await updateReview(productId, reviewId, reviewData);
-      if (!result.success) {
-        return rejectWithValue(result.message);
+      // Get auth token
+      const token = await SecureStore.getItemAsync('userToken');
+      
+      if (!token) {
+        return rejectWithValue('Authentication required. Please log in again.');
       }
-      return result.review;
+      
+      // Set the same configuration as createReview
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        },
+        timeout: 10000 // 10 seconds timeout
+      };
+      
+      console.log('Sending update review data to server:', {
+        url: `${BASE_URL}/api/products/${productId}/reviews/${reviewId}`,
+        reviewId: reviewId
+      });
+      
+      const response = await axios.put(
+        `${BASE_URL}/api/products/${productId}/reviews/${reviewId}`, 
+        reviewData,
+        config
+      );
+      
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      console.error('Review update error details:', error.message);
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+      return rejectWithValue('Network error - please check your connection and try again');
     }
   }
 );
