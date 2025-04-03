@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { OAuth2Client } = require('google-auth-library');
-const Cart = require('../models/Cart'); // Added Cart model
+const CartItem = require('../models/SqliteCart'); // Updated import
+const Product = require('../models/Product'); // Add Product model import
 
 // JWT secret key from environment variables
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -81,11 +82,33 @@ exports.login = async (req, res) => {
       expiresIn: 86400 // 24 hours
     });
 
-    // Find user's cart
-    const cart = await Cart.findOne({ user: user._id }).populate({
-      path: 'items.product',
-      select: 'name price image stockQuantity category'
+    // Find user's cart using SQLite CartItem model
+    const cartItems = await CartItem.findAll({
+      where: { userId: user._id.toString() }
     });
+
+    // Get product details from MongoDB for cart items
+    let cartWithProducts = [];
+    if (cartItems && cartItems.length > 0) {
+      const productIds = cartItems.map(item => item.productId);
+      const products = await Product.find({ _id: { $in: productIds } });
+      
+      // Map products to cart items
+      cartWithProducts = cartItems.map(item => {
+        const product = products.find(p => p._id.toString() === item.productId);
+        return {
+          product: product ? {
+            _id: product._id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            stockQuantity: product.stockQuantity,
+            category: product.category
+          } : null,
+          quantity: item.quantity
+        };
+      }).filter(item => item.product); // Filter out items with no matching product
+    }
 
     // Send response with user info, token, and cart
     res.status(200).send({
@@ -98,7 +121,7 @@ exports.login = async (req, res) => {
         isAdmin: user.is_admin
       },
       token,
-      cart: cart ? cart.items : []
+      cart: cartWithProducts
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
