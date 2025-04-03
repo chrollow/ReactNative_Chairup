@@ -1,25 +1,35 @@
-const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const CartItem = require('../models/SqliteCart');
 
 // Get user's cart
 exports.getUserCart = async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: req.userId })
-      .populate({
-        path: 'items.product',
-        select: 'name price image stockQuantity category'
-      });
+    // Find all cart items for this user
+    const cartItems = await CartItem.findAll({
+      where: { userId: req.userId }
+    });
     
-    if (!cart) {
-      // Create empty cart if none exists
-      cart = new Cart({
-        user: req.userId,
-        items: []
-      });
-      await cart.save();
-    }
+    // Get product details for each cart item
+    const productIds = cartItems.map(item => item.productId);
+    const products = await Product.find({ _id: { $in: productIds } });
     
-    res.status(200).send(cart);
+    // Map products to cart items
+    const items = cartItems.map(item => {
+      const product = products.find(p => p._id.toString() === item.productId);
+      return {
+        product: {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          stockQuantity: product.stockQuantity,
+          category: product.category
+        },
+        quantity: item.quantity
+      };
+    });
+    
+    res.status(200).send({ items });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -42,40 +52,53 @@ exports.updateCart = async (req, res) => {
       });
     }
     
-    // Find user's cart
-    let cart = await Cart.findOne({ user: req.userId });
-    
-    if (!cart) {
-      // Create new cart if none exists
-      cart = new Cart({
-        user: req.userId,
-        items: [{ product: productId, quantity }]
-      });
-    } else {
-      // Check if product already in cart
-      const itemIndex = cart.items.findIndex(
-        item => item.product.toString() === productId
-      );
-      
-      if (itemIndex > -1) {
-        // Update existing item
-        cart.items[itemIndex].quantity = quantity;
-      } else {
-        // Add new item
-        cart.items.push({ product: productId, quantity });
+    // Check if item already exists in cart
+    let cartItem = await CartItem.findOne({
+      where: { 
+        userId: req.userId,
+        productId: productId
       }
+    });
+    
+    if (cartItem) {
+      // Update quantity
+      cartItem.quantity = quantity;
+      await cartItem.save();
+    } else {
+      // Create new cart item
+      cartItem = await CartItem.create({
+        userId: req.userId,
+        productId: productId,
+        quantity: quantity
+      });
     }
     
-    await cart.save();
+    // Get updated cart
+    const cartItems = await CartItem.findAll({
+      where: { userId: req.userId }
+    });
     
-    // Return populated cart
-    const populatedCart = await Cart.findById(cart._id)
-      .populate({
-        path: 'items.product',
-        select: 'name price image stockQuantity category'
-      });
+    // Get product details for each cart item
+    const productIds = cartItems.map(item => item.productId);
+    const products = await Product.find({ _id: { $in: productIds } });
     
-    res.status(200).send(populatedCart);
+    // Map products to cart items
+    const items = cartItems.map(item => {
+      const product = products.find(p => p._id.toString() === item.productId);
+      return {
+        product: {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          stockQuantity: product.stockQuantity,
+          category: product.category
+        },
+        quantity: item.quantity
+      };
+    });
+    
+    res.status(200).send({ items });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -86,28 +109,40 @@ exports.removeCartItem = async (req, res) => {
   try {
     const { productId } = req.params;
     
-    // Find user's cart
-    const cart = await Cart.findOne({ user: req.userId });
+    // Delete the cart item
+    await CartItem.destroy({
+      where: {
+        userId: req.userId,
+        productId: productId
+      }
+    });
     
-    if (!cart) {
-      return res.status(404).send({ message: "Cart not found" });
-    }
+    // Get updated cart
+    const cartItems = await CartItem.findAll({
+      where: { userId: req.userId }
+    });
     
-    // Remove item
-    cart.items = cart.items.filter(
-      item => item.product.toString() !== productId
-    );
+    // Get product details for each cart item
+    const productIds = cartItems.map(item => item.productId);
+    const products = await Product.find({ _id: { $in: productIds } });
     
-    await cart.save();
+    // Map products to cart items
+    const items = cartItems.map(item => {
+      const product = products.find(p => p._id.toString() === item.productId);
+      return {
+        product: {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          stockQuantity: product.stockQuantity,
+          category: product.category
+        },
+        quantity: item.quantity
+      };
+    });
     
-    // Return updated cart
-    const populatedCart = await Cart.findById(cart._id)
-      .populate({
-        path: 'items.product',
-        select: 'name price image stockQuantity category'
-      });
-    
-    res.status(200).send(populatedCart);
+    res.status(200).send({ items });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -116,14 +151,10 @@ exports.removeCartItem = async (req, res) => {
 // Clear cart
 exports.clearCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.userId });
-    
-    if (!cart) {
-      return res.status(404).send({ message: "Cart not found" });
-    }
-    
-    cart.items = [];
-    await cart.save();
+    // Delete all cart items for this user
+    await CartItem.destroy({
+      where: { userId: req.userId }
+    });
     
     res.status(200).send({ message: "Cart cleared successfully" });
   } catch (error) {

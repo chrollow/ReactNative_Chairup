@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');  // Add this import
 const { notifyOrderStatusChange } = require('../services/notificationService'); // Add this import
+const CartItem = require('../models/SqliteCart'); // Add this import
 
 // Create a new order
 exports.createOrder = async (req, res) => {
@@ -47,6 +48,9 @@ exports.createOrder = async (req, res) => {
     });
     
     const createdOrder = await order.save();
+    
+    // Clear the cart after checkout
+    await exports.clearCartAfterCheckout(req.userId);
     
     // Return the created order with populated product details
     const populatedOrder = await Order.findById(createdOrder._id)
@@ -180,5 +184,18 @@ exports.verifyProductPurchase = async (req, res) => {
   } catch (error) {
     console.error('Purchase verification error:', error);
     res.status(500).send({ message: error.message });
+  }
+};
+
+// Clear the cart after checkout
+exports.clearCartAfterCheckout = async (userId) => {
+  try {
+    await CartItem.destroy({
+      where: { userId: userId }
+    });
+    return true;
+  } catch (error) {
+    console.error('Error clearing cart after checkout:', error);
+    return false;
   }
 };
