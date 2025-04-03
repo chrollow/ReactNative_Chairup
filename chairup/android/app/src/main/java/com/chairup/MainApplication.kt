@@ -1,4 +1,4 @@
-package com.chairup
+package com.donnabaldoza.chairup
 
 import android.app.Application
 import android.content.res.Configuration

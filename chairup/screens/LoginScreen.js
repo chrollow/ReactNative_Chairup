@@ -1,48 +1,60 @@
 // screens/LoginScreen.js
-import React, { useState, useContext } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  Button, 
+import React, { useState, useContext, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
   KeyboardAvoidingView,
   Platform,
   Image,
   ActivityIndicator,
-  TouchableOpacity
-} from 'react-native';
-import FormContainer from './Shared/FormContainer';
-import Input from './Shared/Input';
-import GoogleLogin from './Shared/GoogleLogin';
-import FacebookLogin from './Shared/FacebookLogin'; // Import the new component
-import { AuthContext } from '../Context/Store/AuthGlobal';
-import { loginUser } from '../Context/Actions/Auth.actions';
+  TouchableOpacity,
+} from "react-native";
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+} from "@react-native-google-signin/google-signin";
+import FormContainer from "./Shared/FormContainer";
+import Input from "./Shared/Input";
+import GoogleLogin from "./Shared/GoogleLogin";
+import FacebookLogin from "./Shared/FacebookLogin";
+import { AuthContext } from "../Context/Store/AuthGlobal";
+import { loginUser } from "../Context/Actions/Auth.actions";
 
 const LoginScreen = ({ navigation }) => {
   const { dispatch } = useContext(AuthContext);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState();
   const [isLoading, setIsLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState();
+
+  useEffect(() => {
+    // Configure Google Sign-In
+    GoogleSignin.configure({
+      webClientId:
+        "342445904600-4diarlo8slhta1kjb6cj6s3eqb2r9cjf.apps.googleusercontent.com", // Replace with your web client ID
+    });
+  }, []);
 
   const handleSubmit = async () => {
     if (email === "" || password === "") {
       setError("Please fill in your credentials");
       return;
     }
-    
-    // Remove the error message if previously shown
+
     setError("");
     setIsLoading(true);
-    
+
     const user = {
       email,
       password,
     };
-    
+
     try {
-      // loginUser now returns a boolean success value
       const success = await loginUser(user, dispatch);
+      console.log(user);
       
       if (!success) {
         setError("Invalid credentials");
@@ -56,30 +68,87 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLoginSuccess = (userData) => {
     dispatch({
-      type: 'SET_CURRENT_USER',
+      type: "SET_CURRENT_USER",
       payload: {
         isAuthenticated: true,
-        user: userData
-      }
+        user: userData,
+      },
     });
-    
-    // Wait a moment before navigating
+
     setTimeout(() => {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Home' }]
+        routes: [{ name: "Main" }],
       });
     }, 500);
   };
 
+  const signin = async () => {
+    try {
+      console.log("Attempting Google Sign-In...");
+
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = (await GoogleSignin.getTokens()).idToken;
+
+      console.log("User Info:", userInfo);
+      console.log("ID Token:", idToken);
+
+      // Simulate successful login by updating the app state
+      dispatch({
+        type: "SET_CURRENT_USER",
+        payload: {
+          isAuthenticated: true,
+          user: userInfo.user,
+        },
+      });
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Main" }],
+      });
+    } catch (e) {
+      console.error("Google Sign-In Error:", e);
+      setError(e.message || "Google Sign-In failed");
+    }
+  };
+
+  const logout = async () => {
+    try {
+      console.log("Logging out...");
+      
+      // Revoke Google access and sign out
+      await GoogleSignin.revokeAccess();
+      await GoogleSignin.signOut();
+
+      // Clear local storage
+      await SecureStore.deleteItemAsync("userToken");
+      await SecureStore.deleteItemAsync("userData");
+
+      // Clear state
+      setUserInfo(null);
+      dispatch({
+        type: "SET_CURRENT_USER",
+        payload: {
+          isAuthenticated: false,
+          user: {},
+        },
+      });
+
+      console.log("Logout successful");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <View style={styles.logoContainer}>
-        <Image 
-          source={require('../assets/chair-logo.png')} 
+        <Image
+          source={require("../assets/chair-logo.png")}
           style={styles.logo}
           tintColor="#333333"
         />
@@ -105,32 +174,38 @@ const LoginScreen = ({ navigation }) => {
           containerStyle={styles.inputContainer}
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        
+
         <View style={styles.buttonGroup}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#333333" />
           ) : (
-            <TouchableOpacity 
-              style={styles.loginButton}
-              onPress={handleSubmit}
-            >
+            <TouchableOpacity style={styles.loginButton} onPress={handleSubmit}>
               <Text style={styles.loginButtonText}>Login</Text>
             </TouchableOpacity>
           )}
         </View>
-        
+
         <View style={styles.orContainer}>
           <View style={styles.divider} />
           <Text style={styles.orText}>OR</Text>
           <View style={styles.divider} />
         </View>
-        
-        <GoogleLogin onLoginSuccess={handleLoginSuccess} />
+
+        {userInfo ? (
+          <Button title="Logout" onPress={logout} />
+        ) : (
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Standard}
+            color={GoogleSigninButton.Color.Dark}
+            onPress={signin}
+          />
+        )}
+
         <FacebookLogin onLoginSuccess={handleLoginSuccess} />
-        
+
         <View style={styles.registerContainer}>
           <Text style={styles.middleText}>Don't have an account yet?</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => navigation.navigate("Register")}
             style={styles.registerButton}
           >
@@ -145,7 +220,7 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F6F3',
+    backgroundColor: "#F8F6F3",
   },
   logoContainer: {
     alignItems: 'center',

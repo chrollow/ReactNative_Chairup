@@ -1,4 +1,4 @@
-package com.chairup
+package com.donnabaldoza.chairup
 
 import android.os.Build
 import android.os.Bundle
