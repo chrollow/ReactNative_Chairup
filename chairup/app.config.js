@@ -1,4 +1,6 @@
-{
+import 'dotenv/config';
+
+export default {
   "expo": {
     "name": "ChairUp",
     "slug": "chairup",
@@ -25,7 +27,8 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.donnabaldoza.chairup"
+      "package": "com.donnabaldoza.chairup",
+      "googleServicesFile": process.env.GOOGLE_SERVICES_LOGIN
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,13 +40,14 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-google-signin/google-signin"
     ],
     "scheme": "chairup",
     "facebookScheme": "fb1196596965367294",
     "owner": "donn_baldoza",
     "extra": {
-      "googleClientId": "562957089179-v0glkbdo2sc169prvf84hhrdi0p2rouj.apps.googleusercontent.com",
+      "googleClientId": "342445904600-4diarlo8slhta1kjb6cj6s3eqb2r9cjf.apps.googleusercontent.com",
       "facebookAppId": "1196596965367294",
       "eas": {
         "projectId": "7a47c849-db2e-4dba-af08-01a6f8497072"

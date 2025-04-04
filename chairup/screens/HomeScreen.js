@@ -157,9 +157,9 @@ const HomeScreen = ({ navigation }) => {
         />
       </View>
       
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      {/* <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Icon name="logout" size={24} color="#fff" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </SafeAreaView>
   );
 };

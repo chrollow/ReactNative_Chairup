@@ -198,15 +198,14 @@ exports.googleAuth = async (req, res) => {
     });
     
     if (user) {
-      // User exists, login
-      // Update profile image if provided
+      // Update existing user's profile if needed
       if (profileImage && profileImage !== user.profile_image) {
         user.profile_image = profileImage;
         await user.save();
       }
 
       const token = jwt.sign({ id: user._id }, JWT_SECRET, {
-        expiresIn: 86400 // 24 hours
+        expiresIn: 86400
       });
 
       return res.status(200).send({
@@ -214,40 +213,40 @@ exports.googleAuth = async (req, res) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          phone: user.phone,
           profileImage: profileImage || user.profile_image,
           isAdmin: user.is_admin
         },
         token
       });
-    } else {
-      // User doesn't exist, register
-      user = new User({
-        name,
-        email,
-        profile_image: profileImage,
-        google_id: email
-      });
-
-      await user.save();
-
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, {
-        expiresIn: 86400 // 24 hours
-      });
-
-      res.status(201).send({
-        message: "User registered via Google successfully!",
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          profileImage: user.profile_image,
-          isAdmin: user.is_admin
-        },
-        token
-      });
     }
+
+    // Create new user if not exists
+    user = new User({
+      name,
+      email,
+      profile_image: profileImage,
+      google_id: email
+    });
+
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: 86400
+    });
+
+    res.status(201).send({
+      message: "Registered successfully via Google!",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profile_image,
+        isAdmin: user.is_admin
+      },
+      token
+    });
   } catch (error) {
+    console.error('Google auth error:', error);
     res.status(400).send({ message: 'Invalid Google login data' });
   }
 };

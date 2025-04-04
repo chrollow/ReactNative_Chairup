@@ -19,8 +19,8 @@ import { logoutUser } from '../../Context/Actions/Auth.actions';
 import Input from '../Shared/Input';
 import styles from './styles/ProfileScreen.styles';
 
-const API_URL = "http://192.168.1.39:3000/api";
-const BASE_URL = "http://192.168.1.39:3000"; // Add BASE_URL for images
+const API_URL = "http://192.168.100.11:3000/api";
+const BASE_URL = "http://192.168.100.11:3000"; // Add BASE_URL for images
 
 const ProfileScreen = () => {
   const navigation = useNavigation();

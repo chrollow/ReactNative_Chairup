@@ -1,9 +1,10 @@
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from "react-native";
 import axios from 'axios';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Update this to your server's IP/domain - use your computer's IP on the same network
-const API_URL = "http://192.168.1.39:3000/api";
+const API_URL = "http://192.168.100.11:3000/api";
 
 export const SET_CURRENT_USER = "SET_CURRENT_USER";
 
@@ -99,7 +100,6 @@ export const registerUser = async (userData) => {
 
 export const logoutUser = async (dispatch) => {
   try {
-    // Get current user data before logout
     const userData = await SecureStore.getItemAsync('userData');
     const token = await SecureStore.getItemAsync('userToken');
     
@@ -120,6 +120,15 @@ export const logoutUser = async (dispatch) => {
         console.error("Error clearing push token:", err);
       }
     }
+
+    // Handle Google Sign-Out
+    try {
+      await GoogleSignin.revokeAccess();
+      await GoogleSignin.signOut();
+      console.log("Google Sign-Out successful");
+    } catch (err) {
+      console.error("Error during Google Sign-Out:", err);
+    }
     
     // Clear local storage
     await SecureStore.deleteItemAsync("userToken");
@@ -134,12 +143,12 @@ export const logoutUser = async (dispatch) => {
       }
     });
     
-    // Clear cart state ONLY LOCALLY (not on server)
+    // Clear cart state ONLY LOCALLY
     dispatch({
       type: 'CLEAR_CART'
     });
     
-    console.log("Logged out: Cart preserved on server but cleared locally");
+    console.log("Logged out successfully");
   } catch (error) {
     console.error("Error during logout:", error);
   }
