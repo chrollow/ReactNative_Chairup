@@ -14,15 +14,19 @@ import { ProductContext } from '../../Context/Store/ProductGlobal';
 import { useIsFocused } from '@react-navigation/native';
 import { syncCartItem, deleteCartItem, clearServerCart, fetchUserCart } from '../../Context/Actions/Product.actions';
 import * as SecureStore from 'expo-secure-store';
+import PromotionModal from '../../components/Promotions/PromotionModal';
+import axios from 'axios';
+import { API_URL } from '../../utils/api';
 
-const API_URL = "http://192.168.1.39:3000/api";
 const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 
-const CartScreen = ({ navigation }) => {
+const CartScreen = ({ navigation, route }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
   const [total, setTotal] = useState(0);
   const [userId, setUserId] = useState(null);
   const isFocused = useIsFocused();
+  const [promotionModalVisible, setPromotionModalVisible] = useState(false);
+  const [currentPromotion, setCurrentPromotion] = useState(null);
   
   // Get current user ID for debugging
   useEffect(() => {
@@ -60,6 +64,13 @@ const CartScreen = ({ navigation }) => {
       refreshCartData();
     }
   }, [isFocused]);
+  
+  // Add useEffect to handle promotion code from navigation params
+  useEffect(() => {
+    if (route.params?.promoCode && route.params?.showPromoModal) {
+      fetchPromotion(route.params.promoCode);
+    }
+  }, [route.params]);
   
   // Function to refresh cart data from server
   const refreshCartData = async () => {
@@ -189,6 +200,24 @@ const CartScreen = ({ navigation }) => {
     navigation.navigate("Checkout");
   };
   
+  const fetchPromotion = async (code) => {
+    try {
+      const response = await axios.get(`${API_URL}/promotions/validate/${code}`);
+      if (response.data.valid) {
+        setCurrentPromotion(response.data.promotion);
+        setPromotionModalVisible(true);
+        
+        // Clear the route params
+        navigation.setParams({
+          promoCode: undefined,
+          showPromoModal: undefined
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching promotion:', error);
+    }
+  };
+  
   const renderCartItem = ({ item }) => {
     const { product, quantity } = item;
     
@@ -306,6 +335,12 @@ const CartScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       )}
+      
+      <PromotionModal
+        visible={promotionModalVisible}
+        onClose={() => setPromotionModalVisible(false)}
+        promotion={currentPromotion}
+      />
     </SafeAreaView>
   );
 };

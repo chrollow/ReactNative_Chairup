@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import API from '../../utils/api';
+import { showPromotionNotification } from '../../utils/notifications';
 
 const AdminPromotionsScreen = ({ navigation }) => {
   const [promotions, setPromotions] = useState([]);
@@ -131,6 +132,17 @@ const AdminPromotionsScreen = ({ navigation }) => {
             onPress={() => handleEditPromotion(item)}
           >
             <Ionicons name="create-outline" size={22} color="#4a6da7" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={() => {
+              // Show a local test notification
+              showPromotionNotification(item);
+              Alert.alert('Test Notification', 'Promotion notification sent!');
+            }}
+          >
+            <Ionicons name="notifications-outline" size={22} color="#6b7fd7" />
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -340,6 +352,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editButton: {
+    padding: 8,
+    marginBottom: 8,
+  },
+  testButton: {
     padding: 8,
     marginBottom: 8,
   },

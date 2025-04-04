@@ -193,19 +193,24 @@ export default function App() {
     // This listener handles when a user taps on a notification
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       response => {
-        const { orderId } = response.notification.request.content.data;
+        const data = response.notification.request.content.data;
         
-        // Navigate to the OrderDetails screen
-        // This assumes you have a ref to your navigation
-        if (orderId && navigationRef.current) {
-          // For customers
+        if (data.orderId) {
+          // Navigate to order details (existing code)
           navigationRef.current.navigate('ProductNavigator', {
             screen: 'OrderDetails',
-            params: { orderId }
+            params: { orderId: data.orderId }
           });
-          
-          // If the user is admin, you might need different navigation
-          // You could check user role here and navigate accordingly
+        } 
+        else if (data.promotionId) {
+          // Navigate to promotion details or show promo modal
+          navigationRef.current.navigate('Products', {
+            screen: 'Cart',
+            params: { 
+              promoCode: data.code,
+              showPromoModal: true
+            }
+          });
         }
       }
     );

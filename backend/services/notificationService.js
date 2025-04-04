@@ -1,6 +1,7 @@
 const axios = require('axios');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const Promotion = require('../models/Promotion');
 
 // Get message based on order status
 const getNotificationMessage = (orderId, status) => {
@@ -116,6 +117,60 @@ const notifyOrderStatusChange = async (orderId, status) => {
   }
 };
 
+// Send notification about new promotion
+const notifyNewPromotion = async (promotionId) => {
+  try {
+    const promotion = await Promotion.findById(promotionId);
+    
+    if (!promotion) {
+      console.log('Promotion not found');
+      return;
+    }
+
+    // Get all users with push tokens
+    const users = await User.find({ pushToken: { $exists: true, $ne: null } });
+    
+    if (!users.length) {
+      console.log('No users with push tokens found');
+      return;
+    }
+    
+    const message = {
+      title: `New Discount: ${promotion.discountPercent}% OFF`,
+      body: `Use code ${promotion.code} for ${promotion.discountPercent}% off your next purchase!`
+    };
+    
+    // Send notification to all users with push tokens
+    for (const user of users) {
+      try {
+        await sendPushNotification(
+          user.pushToken, 
+          message, 
+          { 
+            promotionId: promotionId.toString(),
+            screen: 'Promotion',
+            code: promotion.code
+          }
+        );
+        
+        console.log(`Promotion notification sent to user ${user._id}`);
+      } catch (error) {
+        console.error(`Error sending promotion notification to user ${user._id}:`, error);
+        
+        // Handle invalid tokens
+        if (error.message && error.message.includes("DeviceNotRegistered")) {
+          user.pushToken = null;
+          await user.save();
+          console.log(`Cleared invalid push token for user ${user._id}`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in notifyNewPromotion:', error);
+  }
+};
+
 module.exports = {
-  notifyOrderStatusChange
+  notifyOrderStatusChange,
+  notifyNewPromotion
 };

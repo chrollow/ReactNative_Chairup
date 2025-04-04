@@ -79,3 +79,23 @@ export const savePushTokenToServer = async (token) => {
     console.error('Error saving push token to server:', error);
   }
 };
+
+// Send local notification about a promotion
+export const showPromotionNotification = async (promotion) => {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `${promotion.discountPercent}% OFF - Limited Time!`,
+        body: `Use code ${promotion.code} at checkout for ${promotion.discountPercent}% off your purchase`,
+        data: { 
+          promotionId: promotion._id,
+          code: promotion.code,
+          screen: 'Promotion'
+        },
+      },
+      trigger: null, // Null trigger means the notification fires immediately
+    });
+  } catch (error) {
+    console.error('Error showing promotion notification:', error);
+  }
+};

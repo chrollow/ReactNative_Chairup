@@ -1,4 +1,5 @@
 const Promotion = require('../models/Promotion');
+const { notifyNewPromotion } = require('../services/notificationService');
 
 // Get all promotions
 exports.getAllPromotions = async (req, res) => {
@@ -60,6 +61,12 @@ exports.createPromotion = async (req, res) => {
     });
     
     const savedPromotion = await promotion.save();
+    
+    // Send notification if the promotion is active
+    if (savedPromotion.active) {
+      await notifyNewPromotion(savedPromotion._id);
+    }
+    
     res.status(201).send(savedPromotion);
   } catch (error) {
     res.status(500).send({ message: error.message });
@@ -93,12 +100,21 @@ exports.updatePromotion = async (req, res) => {
     if (code) promotion.code = code.toUpperCase();
     if (discountPercent !== undefined) promotion.discountPercent = discountPercent;
     if (expiryDate !== undefined) promotion.expiryDate = expiryDate;
-    if (active !== undefined) promotion.active = active;
+    if (active !== undefined) {
+      promotion._previousActive = promotion.active;
+      promotion.active = active;
+    }
     if (description !== undefined) promotion.description = description;
     
     promotion.updated_at = Date.now();
     
     const updatedPromotion = await promotion.save();
+    
+    // Send notification if promotion was inactive and is now active
+    if (active === true && !promotion._previousActive) {
+      await notifyNewPromotion(updatedPromotion._id);
+    }
+    
     res.status(200).send(updatedPromotion);
   } catch (error) {
     res.status(500).send({ message: error.message });
