@@ -29,6 +29,7 @@ const HomeScreen = ({ navigation }) => {
   const [latestProducts, setLatestProducts] = useState([]);
   const [bestsellingProducts, setBestsellingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activePromotions, setActivePromotions] = useState([]);
 
   const toggleDrawer = () => {
     setShowDrawer(!showDrawer);
@@ -108,6 +109,10 @@ const HomeScreen = ({ navigation }) => {
         .slice(0, 10); // Take more products for horizontal scrolling
       
       setBestsellingProducts(highRatedProducts);
+
+      // Fetch active promotions
+      const promotionsResponse = await API.get('/promotions?active=true');
+      setActivePromotions(promotionsResponse.data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -166,6 +171,13 @@ const HomeScreen = ({ navigation }) => {
     );
   };
 
+  const renderPromoItem = ({ item }) => (
+    <View style={styles.promoItem}>
+      <Text style={styles.promoCode}>{item.code}</Text>
+      <Text style={styles.promoDescription}>{item.description}</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -200,6 +212,29 @@ const HomeScreen = ({ navigation }) => {
             Welcome{userData?.name ? `, ${userData.name}` : ''}!
           </Text>
           <Text style={styles.subText}>Find your perfect chair today</Text>
+        </View>
+
+        <View style={styles.promoContainer}>
+          <Text style={styles.sectionTitle}>Special Offers</Text>
+          <Text style={styles.sectionSubtitle}>Use these codes at checkout</Text>
+          
+          {loading ? (
+            <ActivityIndicator size="large" color="#4a6da7" style={styles.loader} />
+          ) : (
+            activePromotions.length > 0 ? (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={activePromotions}
+                keyExtractor={item => item._id}
+                renderItem={renderPromoItem}
+                contentContainerStyle={styles.horizontalList}
+                nestedScrollEnabled={true}
+              />
+            ) : (
+              <Text style={styles.noProductsText}>No active promotions at this time</Text>
+            )
+          )}
         </View>
         
         <View style={styles.productContainer}>
@@ -309,6 +344,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666666',
     letterSpacing: 0.5,
+  },
+  promoContainer: {
+    padding: 16,
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  promoItem: {
+    width: 220,
+    backgroundColor: '#F8F6F3',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    padding: 12,
+  },
+  promoCode: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  promoDescription: {
+    fontSize: 13,
+    color: '#666666',
+    marginTop: 4,
+    lineHeight: 18,
   },
   productContainer: {
     padding: 16,

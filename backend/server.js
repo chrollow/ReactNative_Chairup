@@ -9,6 +9,7 @@ const orderRoutes = require('./routes/order.routes');
 const reviewRoutes = require('./routes/review.routes');
 const cartRoutes = require('./routes/cart.routes');
 const usersRoutes = require('./routes/users');
+const promotionRoutes = require('./routes/promotion.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/carts', cartRoutes);
 app.use('/api', reviewRoutes); // Notice the base path is different
 app.use('/api/users', usersRoutes);
+app.use('/api/promotions', promotionRoutes);
 
 // Simple test route
 app.get('/', (req, res) => {

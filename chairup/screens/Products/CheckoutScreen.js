@@ -34,6 +34,9 @@ const CheckoutScreen = ({ navigation }) => {
   const [subTotal, setSubTotal] = useState(0);
   const [shippingCost, setShippingCost] = useState(10); // Fixed shipping cost for now
   const [total, setTotal] = useState(0);
+  const [promoCode, setPromoCode] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [appliedPromo, setAppliedPromo] = useState(null);
 
   // Calculate totals when cart changes
   useEffect(() => {
@@ -44,8 +47,8 @@ const CheckoutScreen = ({ navigation }) => {
       });
     }
     setSubTotal(sum);
-    setTotal(sum + shippingCost);
-  }, [stateProducts?.cart, shippingCost]);
+    setTotal(sum + shippingCost - discount);
+  }, [stateProducts?.cart, shippingCost, discount]);
 
   const validateForm = () => {
     if (!address.trim()) {
@@ -69,6 +72,29 @@ const CheckoutScreen = ({ navigation }) => {
       return false;
     }
     return true;
+  };
+
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      Alert.alert('Error', 'Please enter a promo code');
+      return;
+    }
+    
+    try {
+      const response = await axios.get(`${API_URL}/promotions/validate/${promoCode.trim().toUpperCase()}`);
+      
+      if (response.data.valid) {
+        const promoDiscount = (subTotal * response.data.promotion.discountPercent) / 100;
+        setDiscount(promoDiscount);
+        setAppliedPromo(response.data.promotion);
+        Alert.alert('Success', `Promo code applied! You saved $${promoDiscount.toFixed(2)}`);
+      } else {
+        Alert.alert('Invalid Code', response.data.message || 'This promo code is invalid or expired');
+      }
+    } catch (error) {
+      console.error('Error applying promo code:', error);
+      Alert.alert('Error', 'Failed to apply promo code');
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -312,7 +338,14 @@ const CheckoutScreen = ({ navigation }) => {
             <Text style={styles.orderSummaryLabel}>Subtotal</Text>
             <Text style={styles.orderSummaryValue}>${subTotal.toFixed(2)}</Text>
           </View>
-          
+
+          {discount > 0 && (
+            <View style={styles.orderSummaryItem}>
+              <Text style={[styles.orderSummaryLabel, {color: '#4CAF50'}]}>Discount</Text>
+              <Text style={[styles.orderSummaryValue, {color: '#4CAF50'}]}>-${discount.toFixed(2)}</Text>
+            </View>
+          )}
+
           <View style={styles.orderSummaryItem}>
             <Text style={styles.orderSummaryLabel}>Shipping</Text>
             <Text style={styles.orderSummaryValue}>${shippingCost.toFixed(2)}</Text>
@@ -324,6 +357,41 @@ const CheckoutScreen = ({ navigation }) => {
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
           </View>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Promo Code</Text>
+          <View style={styles.promoContainer}>
+            <TextInput
+              style={styles.promoInput}
+              value={promoCode}
+              onChangeText={setPromoCode}
+              placeholder="Enter promo code"
+              autoCapitalize="characters"
+              editable={!appliedPromo}
+            />
+            <TouchableOpacity
+              style={[styles.promoButton, appliedPromo && styles.removePromoButton]}
+              onPress={appliedPromo ? () => {
+                setPromoCode('');
+                setDiscount(0);
+                setAppliedPromo(null);
+              } : applyPromoCode}
+            >
+              <Text style={styles.promoButtonText}>
+                {appliedPromo ? 'Remove' : 'Apply'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {appliedPromo && (
+            <View style={styles.appliedPromoContainer}>
+              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              <Text style={styles.appliedPromoText}>
+                {appliedPromo.discountPercent}% discount applied
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
       
@@ -478,6 +546,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginRight: 8
+  },
+  promoContainer: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  promoInput: {
+    flex: 1,
+    backgroundColor: '#F8F6F3',
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    marginRight: 8,
+  },
+  promoButton: {
+    backgroundColor: '#333333',
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removePromoButton: {
+    backgroundColor: '#f44336',
+  },
+  promoButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  appliedPromoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  appliedPromoText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
   }
 });
 
