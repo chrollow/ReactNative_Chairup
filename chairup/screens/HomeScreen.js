@@ -1,5 +1,4 @@
-// screens/HomeScreen.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -9,55 +8,33 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
   ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthContext } from '../Context/Store/AuthGlobal';
 import { logoutUser } from '../Context/Actions/Auth.actions';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Ionicons } from '@expo/vector-icons';
 import SimpleDrawer from '../components/SimpleDrawer';
+import API from '../utils/api';
+import { useFocusEffect } from '@react-navigation/native';
 
-// Sample chair data
-const chairsData = [
-  {
-    id: '1',
-    name: 'Modern Office Chair',
-    price: 199.99,
-    image: 'https://picsum.photos/id/1/200/200', // Placeholder image
-    description: 'Ergonomic design with lumbar support for all-day comfort'
-  },
-  {
-    id: '2',
-    name: 'Classic Wooden Chair',
-    price: 149.99,
-    image: 'https://picsum.photos/id/2/200/200', // Placeholder image
-    description: 'Timeless wooden design that fits any decor'
-  },
-  {
-    id: '3',
-    name: 'Lounge Chair',
-    price: 299.99,
-    image: 'https://picsum.photos/id/3/200/200', // Placeholder image
-    description: 'Perfect for relaxation with premium cushioning'
-  },
-  {
-    id: '4',
-    name: 'Dining Chair Set',
-    price: 399.99,
-    image: 'https://picsum.photos/id/4/200/200', // Placeholder image
-    description: 'Set of 4 elegant dining chairs with sturdy construction'
-  },
-];
+const API_URL = "http://192.168.1.39:3000/api";
+const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 
 const HomeScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const { dispatch } = useContext(AuthContext);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [latestProducts, setLatestProducts] = useState([]);
+  const [bestsellingProducts, setBestsellingProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const toggleDrawer = () => {
     setShowDrawer(!showDrawer);
   };
 
+  // Fetch user data
   useEffect(() => {
     const getUserData = async () => {
       try {
@@ -73,30 +50,121 @@ const HomeScreen = ({ navigation }) => {
     getUserData();
   }, []);
 
+  // Fetch products whenever screen comes into focus
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Calculate date one week ago for latest arrivals
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const oneWeekAgoFormatted = oneWeekAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      
+      // Fetch latest products (added within the last week)
+      const latestResponse = await API.get(`/products?created_after=${oneWeekAgoFormatted}&sort=created_at&order=desc&limit=10`);
+      setLatestProducts(latestResponse.data || []);
+      
+      // Fetch all products to filter by rating
+      const allProductsResponse = await API.get('/products');
+      const allProducts = allProductsResponse.data || [];
+      
+      // Get products with reviews
+      const productsWithReviews = await Promise.all(
+        allProducts.map(async (product) => {
+          try {
+            // Fetch reviews for each product
+            const reviewsResponse = await API.get(`/products/${product._id}/reviews`);
+            const reviews = reviewsResponse.data || [];
+            
+            // Calculate average rating
+            let avgRating = 0;
+            if (reviews.length > 0) {
+              const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+              avgRating = totalRating / reviews.length;
+            }
+            
+            return {
+              ...product,
+              reviews,
+              avgRating,
+              reviewCount: reviews.length
+            };
+          } catch (error) {
+            console.error(`Error fetching reviews for product ${product._id}:`, error);
+            return {
+              ...product,
+              reviews: [],
+              avgRating: 0,
+              reviewCount: 0
+            };
+          }
+        })
+      );
+      
+      // Filter products with rating >= 4 and has at least one review
+      const highRatedProducts = productsWithReviews
+        .filter(product => product.avgRating >= 4 && product.reviewCount > 0)
+        .sort((a, b) => b.avgRating - a.avgRating) // Sort by highest rating first
+        .slice(0, 10); // Take more products for horizontal scrolling
+      
+      setBestsellingProducts(highRatedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log("HomeScreen is focused - fetching fresh data");
+      fetchProducts();
+    }, [fetchProducts])
+  );
+
   const handleLogout = () => {
     logoutUser(dispatch);
   };
 
-  const renderChairItem = ({ item }) => (
-    <TouchableOpacity style={styles.chairItem}>
-      <Image 
-        source={{ uri: item.image }} 
-        style={styles.chairImage}
-        // If you can't use external images, uncomment this:
-        // style={[styles.chairImage, {backgroundColor: '#ddd'}]}
-      />
-      <View style={styles.chairInfo}>
-        <Text style={styles.chairName}>{item.name}</Text>
-        <Text style={styles.chairPrice}>${item.price}</Text>
-        <Text style={styles.chairDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-        <TouchableOpacity style={styles.addToCartButton}>
-          <Text style={styles.addToCartText}>Add to Cart</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderHorizontalChairItem = ({ item }) => {
+    // Check if image URL is valid
+    const imageUrl = item.image?.startsWith('/uploads/') 
+      ? `${BASE_URL}${item.image}` 
+      : item.image || 'https://via.placeholder.com/200';
+      
+    return (
+      <TouchableOpacity 
+        style={styles.horizontalChairItem}
+        onPress={() => navigation.navigate('ProductNavigator', {
+          screen: 'ProductDetail',
+          params: { productId: item._id, name: item.name }
+        })}
+      >
+        <Image 
+          source={{ uri: imageUrl }} 
+          style={styles.horizontalChairImage}
+          onError={(e) => console.log('Error loading image:', e.nativeEvent?.error)}
+        />
+        <View style={styles.horizontalChairInfo}>
+          <Text style={styles.chairName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.chairPrice}>${parseFloat(item.price).toFixed(2)}</Text>
+          
+          {item.avgRating > 0 && (
+            <View style={styles.ratingContainer}>
+              <Text style={styles.ratingText}>
+                ⭐ {item.avgRating.toFixed(1)} ({item.reviewCount})
+              </Text>
+            </View>
+          )}
+          
+          <Text style={styles.chairDescription} numberOfLines={2}>
+            {item.description || 'No description available'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -105,7 +173,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={toggleDrawer}>
-            <Icon name="menu" size={28} color="#fff" />
+            <Ionicons name="menu" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
         <View style={styles.headerRight}>
@@ -122,43 +190,69 @@ const HomeScreen = ({ navigation }) => {
         navigation={navigation}
       />
       
-      <View style={styles.welcomeContainer}>
-        <Text style={styles.welcomeText}>
-          Welcome{userData?.name ? `, ${userData.name}` : ''}!
-        </Text>
-        <Text style={styles.subText}>Find your perfect chair today</Text>
-      </View>
-      
-      <View style={styles.categoryContainer}>
-        <Text style={styles.sectionTitle}>Categories</Text>
-        <View style={styles.categories}>
-          <TouchableOpacity style={styles.categoryItem}>
-            <Text style={styles.categoryText}>Office</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryItem}>
-            <Text style={styles.categoryText}>Living Room</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryItem}>
-            <Text style={styles.categoryText}>Dining</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryItem}>
-            <Text style={styles.categoryText}>Outdoor</Text>
-          </TouchableOpacity>
+      <ScrollView 
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeText}>
+            Welcome{userData?.name ? `, ${userData.name}` : ''}!
+          </Text>
+          <Text style={styles.subText}>Find your perfect chair today</Text>
         </View>
-      </View>
-      
-      <View style={styles.productContainer}>
-        <Text style={styles.sectionTitle}>Featured Chairs</Text>
-        <FlatList
-          data={chairsData}
-          renderItem={renderChairItem}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
+        
+        <View style={styles.productContainer}>
+          <Text style={styles.sectionTitle}>Latest Arrivals</Text>
+          <Text style={styles.sectionSubtitle}>New this week</Text>
+          
+          {loading ? (
+            <ActivityIndicator size="large" color="#4a6da7" style={styles.loader} />
+          ) : (
+            latestProducts.length > 0 ? (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={latestProducts}
+                keyExtractor={item => item._id}
+                renderItem={renderHorizontalChairItem}
+                contentContainerStyle={styles.horizontalList}
+                nestedScrollEnabled={true}
+              />
+            ) : (
+              <Text style={styles.noProductsText}>No new products added this week</Text>
+            )
+          )}
+        </View>
+        
+        <View style={styles.productContainer}>
+          <Text style={styles.sectionTitle}>Best Sellers</Text>
+          <Text style={styles.sectionSubtitle}>Our highest rated chairs</Text>
+          
+          {loading ? (
+            <ActivityIndicator size="large" color="#4a6da7" style={styles.loader} />
+          ) : (
+            bestsellingProducts.length > 0 ? (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={bestsellingProducts}
+                keyExtractor={item => item._id}
+                renderItem={renderHorizontalChairItem}
+                contentContainerStyle={styles.horizontalList}
+                nestedScrollEnabled={true}
+              />
+            ) : (
+              <Text style={styles.noProductsText}>No highly rated products available</Text>
+            )
+          )}
+        </View>
+        
+        <View style={{ height: 80 }} />
+      </ScrollView>
       
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="logout" size={24} color="#fff" />
+        <Ionicons name="log-out-outline" size={24} color="#fff" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -168,6 +262,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F6F3',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -213,42 +310,7 @@ const styles = StyleSheet.create({
     color: '#666666',
     letterSpacing: 0.5,
   },
-  categoryContainer: {
-    padding: 16,
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  categories: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-  },
-  categoryItem: {
-    backgroundColor: '#F8F6F3',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E6D5B8',
-    width: '23%', // This ensures equal width with proper spacing
-  },
-  categoryText: {
-    color: '#333333',
-    fontWeight: '600',
-    fontSize: 13,
-    textAlign: 'center',
-  },
   productContainer: {
-    flex: 1,
     padding: 16,
     backgroundColor: '#fff',
     marginHorizontal: 16,
@@ -260,44 +322,71 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  chairItem: {
-    backgroundColor: '#F8F6F3',  // Changed to match category background
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#E6D5B8',
-  },
-  chairImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  chairInfo: {
-    padding: 16,
-  },
-  chairName: {
-    fontSize: 20,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#333333',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  chairPrice: {
-    fontSize: 18,
-    color: '#D7A86E',
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  chairDescription: {
+  sectionSubtitle: {
     fontSize: 14,
     color: '#666666',
     marginBottom: 16,
-    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  horizontalList: {
+    paddingRight: 16,
+  },
+  horizontalChairItem: {
+    width: 220,
+    backgroundColor: '#F8F6F3',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E6D5B8',
+  },
+  horizontalChairImage: {
+    width: '100%',
+    height: 160,
+    resizeMode: 'cover',
+  },
+  horizontalChairInfo: {
+    padding: 12,
+    height: 140,
+  },
+  chairName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  chairPrice: {
+    fontSize: 16,
+    color: '#D7A86E',
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  ratingText: {
+    fontSize: 13,
+    color: '#4a6da7',
+    fontWeight: '600',
+  },
+  chairDescription: {
+    fontSize: 13,
+    color: '#666666',
+    marginTop: 4,
+    lineHeight: 18,
   },
   addToCartButton: {
     backgroundColor: '#333333',
@@ -326,6 +415,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  noProductsText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
 
