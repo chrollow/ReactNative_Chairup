@@ -14,7 +14,6 @@ import {
 import FormContainer from './Shared/FormContainer';
 import Input from './Shared/Input';
 import GoogleLogin from './Shared/GoogleLogin';
-import FacebookLogin from './Shared/FacebookLogin'; // Import the new component
 import { AuthContext } from '../Context/Store/AuthGlobal';
 import { loginUser } from '../Context/Actions/Auth.actions';
 
@@ -123,7 +122,7 @@ const LoginScreen = ({ navigation }) => {
         </View>
         
         <GoogleLogin onLoginSuccess={handleLoginSuccess} />
-        <FacebookLogin onLoginSuccess={handleLoginSuccess} />
+        {/* <FacebookLogin onLoginSuccess={handleLoginSuccess} /> */}
         
         <View style={styles.registerContainer}>
           <Text style={styles.middleText}>Don't have an account yet?</Text>

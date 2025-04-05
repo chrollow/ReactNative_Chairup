@@ -25,41 +25,41 @@ const FacebookLogin = ({ onLoginSuccess }) => {
     scopes: ['public_profile'] // Removed email scope
   });
 
-  useEffect(() => {
-    console.log("Facebook response:", JSON.stringify(response, null, 2));
-    if (response?.type === 'success') {
-      setIsLoading(true);
-      const { access_token } = response.params;
-      handleFacebookAuth(access_token);
-    } else if (response?.type === 'error') {
-      console.error("Facebook auth error:", response.error);
-      setIsLoading(false);
-      Alert.alert("Authentication Error", 
-        `Facebook sign-in failed: ${response.error?.description || 'Unknown error'}`);
-    }
-  }, [response]);
+  // useEffect(() => {
+  //   console.log("Facebook response:", JSON.stringify(response, null, 2));
+  //   if (response?.type === 'success') {
+  //     setIsLoading(true);
+  //     const { access_token } = response.params;
+  //     handleFacebookAuth(access_token);
+  //   } else if (response?.type === 'error') {
+  //     console.error("Facebook auth error:", response.error);
+  //     setIsLoading(false);
+  //     Alert.alert("Authentication Error", 
+  //       `Facebook sign-in failed: ${response.error?.description || 'Unknown error'}`);
+  //   }
+  // }, [response]);
 
-  const handleFacebookAuth = async (accessToken) => {
-    try {
-      // Get user data from Facebook
-      console.log("Getting Facebook user data...");
-      const userDataResponse = await fetch(
-        `https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,picture.type(large)`
-      );
-      const userData = await userDataResponse.json();
-      console.log("Facebook user data:", JSON.stringify(userData, null, 2));
+  // const handleFacebookAuth = async (accessToken) => {
+  //   try {
+  //     // Get user data from Facebook
+  //     console.log("Getting Facebook user data...");
+  //     const userDataResponse = await fetch(
+  //       `https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,picture.type(large)`
+  //     );
+  //     const userData = await userDataResponse.json();
+  //     console.log("Facebook user data:", JSON.stringify(userData, null, 2));
       
-      // Create a unique identifier using Facebook ID
-      const uniqueIdentifier = `facebook_${userData.id}@placeholder.com`;
+  //     // Create a unique identifier using Facebook ID
+  //     const uniqueIdentifier = `facebook_${userData.id}@placeholder.com`;
       
-      // Send to backend
-      console.log("Sending data to backend...");
-      const apiResponse = await axios.post(`${API_URL}/auth/facebook`, {
-        email: uniqueIdentifier,
-        name: userData.name,
-        facebookId: userData.id,
-        profileImage: userData.picture?.data?.url
-      });
+  //     // Send to backend
+  //     console.log("Sending data to backend...");
+  //     const apiResponse = await axios.post(`${API_URL}/auth/facebook`, {
+  //       email: uniqueIdentifier,
+  //       name: userData.name,
+  //       facebookId: userData.id,
+  //       profileImage: userData.picture?.data?.url
+  //     });
       
       console.log("Backend response received");
       
