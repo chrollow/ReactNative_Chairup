@@ -18,11 +18,12 @@ import { Ionicons } from '@expo/vector-icons';
 import SimpleDrawer from '../components/SimpleDrawer';
 import API from '../utils/api';
 import { useFocusEffect } from '@react-navigation/native';
+import PromotionDetailModal from '../components/Promotions/PromotionDetailModal';
 
 const API_URL = "http://192.168.1.39:3000/api";
 const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
   const [userData, setUserData] = useState(null);
   const { dispatch } = useContext(AuthContext);
   const [showDrawer, setShowDrawer] = useState(false);
@@ -30,6 +31,8 @@ const HomeScreen = ({ navigation }) => {
   const [bestsellingProducts, setBestsellingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activePromotions, setActivePromotions] = useState([]);
+  const [selectedPromotion, setSelectedPromotion] = useState(null);
+  const [promotionModalVisible, setPromotionModalVisible] = useState(false);
 
   const toggleDrawer = () => {
     setShowDrawer(!showDrawer);
@@ -120,6 +123,50 @@ const HomeScreen = ({ navigation }) => {
     }
   }, []);
 
+  // Add a function to fetch a single promotion by ID
+  const fetchPromotion = useCallback(async (promoId) => {
+    try {
+      const response = await API.get(`/promotions/${promoId}`);
+      if (response.data) {
+        setSelectedPromotion(response.data);
+        setPromotionModalVisible(true);
+      }
+    } catch (error) {
+      console.error('Error fetching promotion:', error);
+    }
+  }, []);
+
+  // Add a function to fetch a promotion by code
+  const fetchPromotionByCode = useCallback(async (code) => {
+    try {
+      const response = await API.get(`/promotions/validate/${code}`);
+      if (response.data && response.data.valid) {
+        setSelectedPromotion(response.data.promotion);
+        setPromotionModalVisible(true);
+      }
+    } catch (error) {
+      console.error('Error fetching promotion by code:', error);
+    }
+  }, []);
+
+  // Handle navigation params to display promotion modal
+  useEffect(() => {
+    if (route.params?.showPromoModal) {
+      if (route.params.promoId) {
+        fetchPromotion(route.params.promoId);
+      } else if (route.params.promoCode) {
+        fetchPromotionByCode(route.params.promoCode);
+      }
+      
+      // Clear params after handling
+      navigation.setParams({
+        showPromoModal: undefined,
+        promoId: undefined,
+        promoCode: undefined
+      });
+    }
+  }, [route.params, fetchPromotion, fetchPromotionByCode, navigation]);
+
   // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -130,6 +177,11 @@ const HomeScreen = ({ navigation }) => {
 
   const handleLogout = () => {
     logoutUser(dispatch);
+  };
+
+  const handlePromoPress = (promotion) => {
+    setSelectedPromotion(promotion);
+    setPromotionModalVisible(true);
   };
 
   const renderHorizontalChairItem = ({ item }) => {
@@ -172,10 +224,18 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const renderPromoItem = ({ item }) => (
-    <View style={styles.promoItem}>
-      <Text style={styles.promoCode}>{item.code}</Text>
-      <Text style={styles.promoDescription}>{item.description}</Text>
-    </View>
+    <TouchableOpacity 
+      style={styles.promoItem}
+      onPress={() => handlePromoPress(item)}
+    >
+      <View>
+        <Text style={styles.promoCode}>{item.code}</Text>
+        <Text style={styles.promoDescription}>{item.description || `${item.discountPercent}% off your purchase`}</Text>
+      </View>
+      <View style={styles.promoPressIndicator}>
+        <Ionicons name="information-circle-outline" size={16} color="#4a6da7" />
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -289,6 +349,12 @@ const HomeScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={24} color="#fff" />
       </TouchableOpacity>
+
+      <PromotionDetailModal 
+        visible={promotionModalVisible}
+        onClose={() => setPromotionModalVisible(false)}
+        promotion={selectedPromotion}
+      />
     </SafeAreaView>
   );
 };
@@ -371,6 +437,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E6D5B8',
     padding: 12,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
   promoCode: {
     fontSize: 16,
@@ -383,6 +451,10 @@ const styles = StyleSheet.create({
     color: '#666666',
     marginTop: 4,
     lineHeight: 18,
+  },
+  promoPressIndicator: {
+    alignSelf: 'flex-end',
+    marginTop: 6,
   },
   productContainer: {
     padding: 16,
