@@ -127,7 +127,7 @@ export const logoutUser = async (dispatch) => {
       await GoogleSignin.signOut();
       console.log("Google Sign-Out successful");
     } catch (err) {
-      console.error("Error during Google Sign-Out:", err);
+      // console.error("Error during Google Sign-Out:", err);
     }
     
     // Clear local storage
@@ -150,6 +150,6 @@ export const logoutUser = async (dispatch) => {
     
     console.log("Logged out successfully");
   } catch (error) {
-    console.error("Error during logout:", error);
+    // console.error("Error during logout:", error);
   }
 };
