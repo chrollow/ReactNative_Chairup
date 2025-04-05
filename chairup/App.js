@@ -203,12 +203,15 @@ export default function App() {
           });
         } 
         else if (data.promotionId) {
-          // Navigate to promotion details or show promo modal
-          navigationRef.current.navigate('Products', {
-            screen: 'Cart',
-            params: { 
-              promoCode: data.code,
-              showPromoModal: true
+          // Correctly navigate through the nested structure
+          navigationRef.current.navigate('Main', {
+            screen: 'ProductNavigator',
+            params: {
+              screen: 'Home',
+              params: { 
+                promoCode: data.code,
+                showPromoModal: true
+              }
             }
           });
         }
