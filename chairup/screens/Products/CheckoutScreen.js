@@ -125,6 +125,7 @@ const CheckoutScreen = ({ navigation }) => {
         phoneNumber: phone,
         paymentMethod,
         itemsPrice: subTotal,
+        discount: discount, // Add this line to include discount
         shippingPrice: shippingCost,
         totalPrice: total
       };

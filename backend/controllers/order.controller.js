@@ -43,6 +43,7 @@ exports.createOrder = async (req, res) => {
       phoneNumber,
       paymentMethod,
       itemsPrice,
+      discount: req.body.discount || 0, // Add this line to capture discount
       shippingPrice,
       totalPrice
     });

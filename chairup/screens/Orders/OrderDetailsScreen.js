@@ -225,6 +225,14 @@ const OrderDetailsScreen = ({ route, navigation }) => {
           <Text style={styles.summaryValue}>${order.itemsPrice.toFixed(2)}</Text>
         </View>
         
+        {/* Add discount row if the order has a discount */}
+        {order.discount > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={[styles.summaryLabel, { color: '#4CAF50' }]}>Discount:</Text>
+            <Text style={[styles.summaryValue, { color: '#4CAF50' }]}>-${order.discount.toFixed(2)}</Text>
+          </View>
+        )}
+        
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Shipping:</Text>
           <Text style={styles.summaryValue}>${order.shippingPrice.toFixed(2)}</Text>

@@ -60,6 +60,11 @@ const OrderSchema = new mongoose.Schema({
     required: true,
     default: 0.0
   },
+  discount: {
+    type: Number,
+    required: true,
+    default: 0
+  },
   isPaid: {
     type: Boolean,
     required: true,
