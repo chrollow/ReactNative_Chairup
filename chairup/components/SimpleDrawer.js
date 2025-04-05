@@ -43,8 +43,27 @@ const SimpleDrawer = ({ isVisible, onClose, navigation }) => {
   };
 
   const navigateTo = (screenName) => {
-    navigation.navigate(screenName);
+    // Close the drawer first
     onClose();
+    
+    // Handle navigation based on screen name
+    switch (screenName) {
+      case 'Main':
+        // Navigate to HomeTab in the main navigator
+        navigation.navigate('HomeTab');
+        break;
+      case 'Products':
+        // Navigate to the Products screen inside ProductNavigator
+        navigation.navigate('ProductNavigator', { screen: 'Products' });
+        break;
+      case 'Profile':
+        // Navigate to Profile
+        navigation.navigate('Profile');
+        break;
+      default:
+        // Just navigate to the screen name directly
+        navigation.navigate(screenName);
+    }
   };
 
   return (
