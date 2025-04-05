@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { getUserCart, updateCartItem, removeCartItem, clearCart as clearCartAPI } from '../../utils/api';
 
 // Update this to your server's IP/domain
-const API_URL = "http://192.168.1.39:3000/api";
+const API_URL = "http://192.168.100.11:3000/api";
 
 // Get all products
 export const getProducts = async () => {

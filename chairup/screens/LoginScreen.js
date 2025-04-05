@@ -63,13 +63,10 @@ const LoginScreen = ({ navigation }) => {
       }
     });
     
-    // Wait a moment before navigating
-    setTimeout(() => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }]
-      });
-    }, 500);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Main' }]
+    });
   };
 
   return (

@@ -346,9 +346,9 @@ const HomeScreen = ({ navigation, route }) => {
         <View style={{ height: 80 }} />
       </ScrollView>
       
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      {/* <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={24} color="#fff" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <PromotionDetailModal 
         visible={promotionModalVisible}
