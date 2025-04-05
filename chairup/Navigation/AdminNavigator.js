@@ -11,7 +11,7 @@ const Stack = createStackNavigator();
 
 const AdminNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="AdminDashboard">
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen 
         name="AdminDashboard" 
         component={AdminDashboardScreen}

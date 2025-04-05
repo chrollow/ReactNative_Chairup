@@ -11,11 +11,11 @@ const Stack = createStackNavigator();
 
 const ProductNavigator = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen 
         name="Products" 
         component={ProductsScreen}
-        options={{ title: 'All Chairs' }}
+        options={{ title: 'All Chairs' }} 
       />
       <Stack.Screen 
         name="ProductDetail" 

@@ -39,7 +39,7 @@ const MainNavigator = () => {
         name="HomeTab" 
         component={HomeScreen} 
         options={{ 
-          headerShown: true,
+          headerShown: false,
           title: 'Home'
         }}
       />
@@ -47,7 +47,7 @@ const MainNavigator = () => {
         name="ProductNavigator" 
         component={ProductNavigator} 
         options={{ 
-          headerShown: true,
+          headerShown: false,
           title: 'Chairs'
         }}
       />
@@ -55,7 +55,7 @@ const MainNavigator = () => {
         name="Profile" 
         component={ProfileScreen} 
         options={{ 
-          headerShown: true,
+          headerShown: false,
           title: 'My Profile' 
         }}
       />

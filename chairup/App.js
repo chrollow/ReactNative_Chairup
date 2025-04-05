@@ -148,13 +148,13 @@ const AppNavigator = () => {
   }
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!stateUser.isAuthenticated ? (
         <>
           <Stack.Screen 
             name="Login" 
             component={LoginScreen} 
-            options={{ title: 'ChairUp - Login' }}
+            options={{ title: 'ChairUp - Login' }} 
           />
           <Stack.Screen 
             name="Register" 
@@ -166,9 +166,6 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="Main" 
           component={MainNavigator} 
-          options={{ 
-            headerShown: false
-          }}
         />
       )}
     </Stack.Navigator>
