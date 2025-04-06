@@ -3,8 +3,8 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 // Replace the import with direct definition
-const API_URL = "http://192.168.1.39:3000/api"; // Update with your server IP
-const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
+const API_URL = "http://192.168.100.11:3000/api"; // Update with your server IP
+const BASE_URL = "http://192.168.100.11:3000"; // Base URL without /api
 
 export const sendOrderStatusNotification = async (orderId, status, userId) => {
   try {

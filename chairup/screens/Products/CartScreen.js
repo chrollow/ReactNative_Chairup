@@ -18,7 +18,7 @@ import PromotionModal from '../../components/Promotions/PromotionModal';
 import axios from 'axios';
 import { API_URL } from '../../utils/api';
 
-const BASE_URL = "http://192.168.1.39:3000"; // Base URL without /api
+const BASE_URL = "http://192.168.100.11:3000"; // Base URL without /api
 
 const CartScreen = ({ navigation, route }) => {
   const { stateProducts, dispatch } = useContext(ProductContext);
