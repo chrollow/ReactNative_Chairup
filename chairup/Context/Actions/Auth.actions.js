@@ -4,7 +4,7 @@ import axios from 'axios';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Update this to your server's IP/domain - use your computer's IP on the same network
-const API_URL = "http://192.168.100.11:3000/api";
+const API_URL = "http://192.168.1.39:3000/api";
 
 export const SET_CURRENT_USER = "SET_CURRENT_USER";
 

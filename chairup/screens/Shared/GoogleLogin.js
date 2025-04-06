@@ -8,7 +8,7 @@ import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = "http://192.168.100.11:3000/api";
+const API_URL = "http://192.168.1.39:3000/api";
 
 const GoogleLogin = ({ onLoginSuccess }) => {
   const navigation = useNavigation();
