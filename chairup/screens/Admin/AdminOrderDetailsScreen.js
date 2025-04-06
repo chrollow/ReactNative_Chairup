@@ -63,6 +63,16 @@ const AdminOrderDetailsScreen = ({ route, navigation }) => {
   };
   
   const handleUpdateStatus = async () => {
+    // Don't allow updating cancelled orders
+    if (order.status === 'cancelled') {
+      Alert.alert(
+        'Cannot Update Order',
+        'This order has been cancelled and its status cannot be changed.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     const statusOptions = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
     
     // Create buttons for each status except the current one

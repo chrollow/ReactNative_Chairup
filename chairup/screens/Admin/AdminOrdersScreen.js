@@ -66,6 +66,16 @@ const AdminOrdersScreen = ({ navigation }) => {
   };
   
   const handleUpdateStatus = async (orderId, currentStatus) => {
+    // Don't allow updating cancelled orders
+    if (currentStatus === 'cancelled') {
+      Alert.alert(
+        'Cannot Update Order',
+        'This order has been cancelled and its status cannot be changed.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     const statusOptions = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
     
     // Create buttons for each status except the current one
@@ -127,6 +137,9 @@ const AdminOrdersScreen = ({ navigation }) => {
           <View>
             <Text style={styles.orderId}>Order #{item._id.substr(-8)}</Text>
             <Text style={styles.orderDate}>{orderDate}</Text>
+            {item.status === 'cancelled' && (
+              <Text style={styles.cancelledNote}>Status cannot be changed</Text>
+            )}
           </View>
           
           <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
@@ -230,6 +243,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 2,
+  },
+  cancelledNote: {
+    color: '#f44336',
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 2
   },
   statusBadge: {
     paddingHorizontal: 10,

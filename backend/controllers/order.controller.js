@@ -129,6 +129,13 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).send({ message: "Order not found" });
     }
     
+    // Prevent updating cancelled orders
+    if (order.status === 'cancelled') {
+      return res.status(400).send({ 
+        message: "Cannot update a cancelled order. This order has been cancelled and its status is final." 
+      });
+    }
+    
     // Update status
     order.status = status;
     
