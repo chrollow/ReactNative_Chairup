@@ -200,3 +200,54 @@ exports.clearCartAfterCheckout = async (userId) => {
     return false;
   }
 };
+
+// Cancel order (User can only cancel pending or processing orders)
+exports.cancelOrder = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    
+    // Find the order
+    const order = await Order.findById(orderId)
+      .populate('orderItems.product');
+    
+    if (!order) {
+      return res.status(404).send({ message: "Order not found" });
+    }
+    
+    // Check if order belongs to the current user
+    if (order.user.toString() !== req.userId) {
+      return res.status(403).send({ message: "Not authorized to cancel this order" });
+    }
+    
+    // Check if order status is cancellable
+    if (order.status !== 'pending' && order.status !== 'processing') {
+      return res.status(400).send({ 
+        message: "Cannot cancel order. Only pending or processing orders can be cancelled." 
+      });
+    }
+    
+    // Restore product stock
+    for (const item of order.orderItems) {
+      if (item.product) {
+        // Increase the stock quantity
+        const product = await Product.findById(item.product._id);
+        if (product) {
+          product.stockQuantity += item.quantity;
+          await product.save();
+        }
+      }
+    }
+    
+    // Update order status to cancelled
+    order.status = 'cancelled';
+    const updatedOrder = await order.save();
+    
+    // Notify about the order status change
+    await notifyOrderStatusChange(order._id, 'cancelled');
+    
+    res.status(200).send(updatedOrder);
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    res.status(500).send({ message: error.message });
+  }
+};

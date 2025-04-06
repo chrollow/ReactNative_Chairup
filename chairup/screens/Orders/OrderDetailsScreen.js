@@ -50,6 +50,46 @@ const OrderDetailsScreen = ({ route, navigation }) => {
     }
   };
 
+  const handleCancelOrder = async () => {
+    // Show confirmation dialog
+    Alert.alert(
+      "Cancel Order",
+      "Are you sure you want to cancel this order? This action cannot be undone.",
+      [
+        { text: "No", style: "cancel" },
+        { 
+          text: "Yes, Cancel Order", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await SecureStore.getItemAsync('userToken');
+              
+              const response = await axios.put(
+                `${API_URL}/orders/${orderId}/cancel`,
+                {},
+                {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                }
+              );
+              
+              // Refresh order details
+              fetchOrderDetails();
+              Alert.alert('Success', 'Your order has been cancelled');
+            } catch (error) {
+              console.error('Error cancelling order:', error);
+              
+              // Show different error messages based on response
+              const errorMessage = error.response?.data?.message || 'Failed to cancel order';
+              Alert.alert('Error', errorMessage);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return '#ff9800';
@@ -147,6 +187,19 @@ const OrderDetailsScreen = ({ route, navigation }) => {
           </View>
         )}
       </View>
+
+      {/* Cancel Order Button - Only show for pending or processing orders */}
+      {(order.status === 'pending' || order.status === 'processing') && (
+        <View style={styles.cancelOrderContainer}>
+          <TouchableOpacity 
+            style={styles.cancelOrderButton}
+            onPress={handleCancelOrder}
+          >
+            <Ionicons name="close-circle-outline" size={18} color="#fff" style={styles.buttonIcon} />
+            <Text style={styles.cancelOrderButtonText}>Cancel Order</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Shipping Address</Text>
@@ -609,6 +662,24 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 8,
     resizeMode: 'cover',
+  },
+  cancelOrderContainer: {
+    marginHorizontal: 15,
+    marginTop: -5,
+    marginBottom: 15,
+  },
+  cancelOrderButton: {
+    flexDirection: 'row',
+    backgroundColor: '#f44336',
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelOrderButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   }
 });
 

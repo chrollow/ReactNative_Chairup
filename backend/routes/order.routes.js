@@ -9,6 +9,7 @@ router.post('/', authMiddleware, orderController.createOrder);
 router.get('/user', authMiddleware, orderController.getUserOrders);
 router.get('/:id', authMiddleware, orderController.getOrderById);
 router.get('/verify-purchase/:productId', authMiddleware, orderController.verifyProductPurchase);
+router.put('/:id/cancel', authMiddleware, orderController.cancelOrder); // Add this new route
 
 // Admin routes
 router.get('/', [authMiddleware, adminMiddleware], orderController.getAllOrders);
