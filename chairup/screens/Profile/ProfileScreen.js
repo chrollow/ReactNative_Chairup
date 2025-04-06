@@ -280,25 +280,27 @@ const ProfileScreen = () => {
           </View>
         )}
 
-        {/* Add My Orders Section */}
-        <View style={styles.ordersSection}>
-          <Text style={styles.sectionTitle}>My Orders</Text>
-          
-          <TouchableOpacity 
-            style={styles.orderButton}
-            onPress={() => navigation.navigate('ProductNavigator', { screen: 'Orders' })}
-          >
-            <View style={styles.orderButtonContent}>
-              <Ionicons name="receipt-outline" size={24} color="#4a6da7" />
-              <Text style={styles.orderButtonText}>View My Orders</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#ccc" />
-          </TouchableOpacity>
-          
-          <Text style={styles.orderDescription}>
-            Track your order status, view order history, and manage returns
-          </Text>
-        </View>
+        {/* Add My Orders Section - Only show for non-admin users */}
+        {user && !user.isAdmin && (
+          <View style={styles.ordersSection}>
+            <Text style={styles.sectionTitle}>My Orders</Text>
+            
+            <TouchableOpacity 
+              style={styles.orderButton}
+              onPress={() => navigation.navigate('ProductNavigator', { screen: 'Orders' })}
+            >
+              <View style={styles.orderButtonContent}>
+                <Ionicons name="receipt-outline" size={24} color="#4a6da7" />
+                <Text style={styles.orderButtonText}>View My Orders</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#ccc" />
+            </TouchableOpacity>
+            
+            <Text style={styles.orderDescription}>
+              Track your order status, view order history, and manage returns
+            </Text>
+          </View>
+        )}
 
         <TouchableOpacity 
           style={[styles.button, styles.logoutButton]} 
